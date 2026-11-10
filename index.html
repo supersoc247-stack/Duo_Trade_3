@@ -6,550 +6,475 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="DuoTrade Pro" />
-  <title>DuoTrade Pro — iPhone Duo IC Markets Live & Sim Terminal</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <meta name="theme-color" content="#040609" />
+  <title>DuoTrade Pro — iPhone Duo Native Fullscreen Terminal</title>
   <style>
-    /* Fallback Self-Contained Core CSS so Safari Offline / Local Viewer still works even without CDN */
     :root {
       --bull-color: #38BDF8;
       --bear-color: #991B1B;
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+      --sar: env(safe-area-inset-right, 0px);
     }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
     html, body {
       margin: 0;
       padding: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
       background-color: #040609;
       color: #E2E8F0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-      overflow-x: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
       user-select: none;
       -webkit-user-select: none;
     }
     .font-mono {
-      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'JetBrains Mono', monospace;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
     }
     .hidden { display: none !important; }
+    
+    /* 100% Full-bleed container filling native iPhone Duo display */
+    #nativeAppRoot {
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background-color: #040609;
+    }
+
+    /* Hardware Simulator Bar (shown when opened on Desktop, hidden automatically in Standalone PWA on iPhone) */
+    #desktopSimToolbar {
+      background: #0B0F17;
+      border-bottom: 1px solid #1E293B;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 11px;
+      z-index: 50;
+    }
+
+    /* Glass HUD Bars pinned with Safe Area insets */
     .glass-hud {
-      background: rgba(10, 14, 20, 0.76);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(8, 12, 18, 0.78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
     .glass-drawer {
-      background: rgba(9, 13, 19, 0.97);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-top: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(7, 10, 16, 0.98);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
     }
-    .duo-frame {
-      transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.12);
-    }
-    .crease-vertical {
-      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.025) 45%, rgba(0,0,0,0.4) 50%, rgba(255,255,255,0.025) 55%, transparent 100%);
+
+    /* Center Fold Hinge Indicator (dynamically rotates vertical/horizontal) */
+    #hardwareHingeCrease {
+      position: absolute;
       pointer-events: none;
+      z-index: 15;
+      display: none;
     }
-    .crease-horizontal {
-      background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.025) 45%, rgba(0,0,0,0.4) 50%, rgba(255,255,255,0.025) 55%, transparent 100%);
-      pointer-events: none;
+    .crease-v {
+      inset-block: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.02) 40%, rgba(0,0,0,0.45) 50%, rgba(255,255,255,0.02) 60%, transparent 100%);
     }
+    .crease-h {
+      inset-inline: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 16px;
+      background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.02) 40%, rgba(0,0,0,0.45) 50%, rgba(255,255,255,0.02) 60%, transparent 100%);
+    }
+
+    /* Dynamic Button Colors */
     .btn-bull-dynamic {
       background-color: var(--bull-color);
-      color: #041019;
+      color: #030D14;
     }
-    .btn-bull-dynamic:hover { filter: brightness(1.1); }
     .btn-bear-dynamic {
       background-color: var(--bear-color);
       color: #FFFFFF;
     }
-    .btn-bear-dynamic:hover { filter: brightness(1.15); }
     .text-bull-dynamic { color: var(--bull-color); }
     .text-bear-dynamic { color: var(--bear-color); }
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #06080C; }
-    ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 3px; }
+
+    /* Custom range input */
     input[type=range] { accent-color: #38BDF8; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between p-1.5 sm:p-3 select-none">
+<body>
 
-  <!-- EXTERNAL SIMULATOR TOOLBAR (Hardware Form Factor + Orientation + Live Login + Swift Code) -->
-  <header class="w-full max-w-6xl mx-auto mb-1.5 flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-[#0D1118] border border-[#1A2230]">
-    <div class="flex items-center gap-2">
-      <div class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" id="connStatusDot"></div>
-      <span class="font-bold text-xs sm:text-sm tracking-tight text-white">DuoTrade Pro</span>
-      <span id="deviceSpecBadge" class="text-[11px] font-mono px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30">
-        Mở 7.6" • Ngang (2670×1878)
-      </span>
-      <span id="activeBrokerBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-        CHẾ ĐỘ: GIẢ LẬP (SIM)
-      </span>
-    </div>
+  <div id="nativeAppRoot">
 
-    <!-- Hardware Form Factor + Orientation Rotation Controls + Live Sign-In Trigger -->
-    <div class="flex items-center gap-1.5 flex-wrap">
-      <!-- Unfolded 7.6" vs Folded 5.4" -->
-      <div class="inline-flex rounded-lg bg-[#06080C] p-0.5 border border-[#1A2230]">
-        <button id="btnModeUnfolded" class="px-2.5 py-1 rounded-md text-xs font-medium transition bg-sky-500 text-slate-950 font-semibold">
-          Mở 7.6"
-        </button>
-        <button id="btnModeFolded" class="px-2.5 py-1 rounded-md text-xs font-medium transition text-slate-400 hover:text-white">
-          Gập 5.4"
-        </button>
+    <!-- DESKTOP SIMULATOR TOPBAR (Auto-hidden in Standalone PWA on iPhone) -->
+    <header id="desktopSimToolbar">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-weight:700; color:#fff;">DuoTrade Pro</span>
+        <span id="activeBrokerBadge" class="font-mono" style="padding:2px 8px; border-radius:4px; background:rgba(245,158,11,0.15); color:#FBBF24; border:1px solid rgba(245,158,11,0.3);">
+          CHẾ ĐỘ: GIẢ LẬP (SIM)
+        </span>
+        <span id="screenDetectBadge" class="font-mono" style="color:#94A3B8;">
+          Màn hình: Đang nhận diện...
+        </span>
       </div>
 
-      <!-- Orientation Rotate Toggle (Landscape vs Portrait) -->
-      <div class="inline-flex rounded-lg bg-[#06080C] p-0.5 border border-[#1A2230]">
-        <button id="btnOrientLandscape" class="px-2.5 py-1 rounded-md text-xs font-medium transition bg-sky-500/25 text-sky-300 border border-sky-500/40">
-          Xoay Ngang ↻
-        </button>
-        <button id="btnOrientPortrait" class="px-2.5 py-1 rounded-md text-xs font-medium transition text-slate-400 hover:text-white">
-          Xoay Dọc ⇅
+      <div style="display:flex; align-items:center; gap:6px;">
+        <!-- Manual override buttons if testing on desktop -->
+        <button id="btnForceUnfolded" style="background:#1E293B; color:#E2E8F0; border:1px solid #334155; padding:3px 8px; border-radius:6px; font-size:11px;">Mở 7.6"</button>
+        <button id="btnForceFolded" style="background:#1E293B; color:#E2E8F0; border:1px solid #334155; padding:3px 8px; border-radius:6px; font-size:11px;">Gập 5.4"</button>
+        <button id="btnQuickSignIn" style="background:rgba(16,185,129,0.2); color:#6EE7B7; border:1px solid rgba(16,185,129,0.4); padding:3px 10px; border-radius:6px; font-size:11px; font-weight:600;">
+          🔑 Đăng nhập IC Markets
         </button>
       </div>
+    </header>
 
-      <button id="btnQuickSignIn" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 transition">
-        🔑 Đăng nhập IC Markets
-      </button>
+    <!-- PURE FULL-BLEED CHART CONTAINER (Occupies 100% Viewport) -->
+    <div id="chartWrapper" style="position:relative; flex:1; width:100%; height:100%; overflow:hidden;">
+      <canvas id="tradingCanvas" style="display:block; width:100%; height:100%; cursor:crosshair;"></canvas>
 
-      <button id="btnOpenSwiftModal" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition flex items-center gap-1">
-        <span>&lt;/&gt; Swift Code</span>
-      </button>
-    </div>
-  </header>
+      <!-- Center Fold Crease Line (Active only in Unfolded mode) -->
+      <div id="hardwareHingeCrease" class="crease-v"></div>
 
-  <!-- MAIN IPHONE DUO VIEWPORT CONTAINER (96%+ Pure Chart Real Estate) -->
-  <main class="flex-1 flex items-center justify-center w-full max-w-6xl mx-auto my-auto overflow-hidden">
-    <div id="duoDeviceContainer" class="duo-frame relative w-full max-w-[1040px] h-[680px] rounded-[32px] bg-[#06080C] border-[5px] border-slate-800 overflow-hidden flex flex-col">
-
-      <!-- Subtle Hinge Crease Line -->
-      <div id="hingeCrease" class="crease-vertical absolute inset-y-0 left-1/2 -translate-x-1/2 w-5 z-10"></div>
-
-      <!-- ULTRA-MINIMAL TOP FLOATING HUD: ONLY Timeframes, Balance & Equity -->
-      <div class="glass-hud absolute top-2.5 left-3 right-3 z-20 px-3 py-1 rounded-xl flex items-center justify-between gap-2 pointer-events-auto">
-        <!-- Timeframe Selector Pills -->
-        <div class="flex items-center gap-0.5" id="timeframeGroup">
-          <button data-tf="M1" class="tf-btn px-2 py-0.5 rounded text-[11px] font-mono text-slate-400 hover:text-white transition">M1</button>
-          <button data-tf="M5" class="tf-btn px-2 py-0.5 rounded text-[11px] font-mono text-slate-400 hover:text-white transition">M5</button>
-          <button data-tf="M15" class="tf-btn px-2 py-0.5 rounded text-[11px] font-mono bg-sky-500 text-slate-950 font-bold transition">M15</button>
-          <button data-tf="H1" class="tf-btn px-2 py-0.5 rounded text-[11px] font-mono text-slate-400 hover:text-white transition">H1</button>
-          <button data-tf="H4" class="tf-btn px-2 py-0.5 rounded text-[11px] font-mono text-slate-400 hover:text-white transition">H4</button>
-          <button data-tf="D1" class="tf-btn px-2 py-0.5 rounded text-[11px] font-mono text-slate-400 hover:text-white transition">D1</button>
+      <!-- ULTRA-MINIMAL TOP FLOATING HUD (Pinned to Safe Area Top) -->
+      <div id="topHudBar" class="glass-hud" style="position:absolute; top:calc(var(--sat) + 8px); left:calc(var(--sal) + 10px); right:calc(var(--sar) + 10px); z-index:20; padding:6px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <!-- Timeframe selector -->
+        <div style="display:flex; align-items:center; gap:3px;" id="timeframeGroup">
+          <button data-tf="M1" class="tf-btn font-mono" style="background:transparent; color:#94A3B8; border:0; padding:3px 6px; font-size:11px; border-radius:4px; font-weight:600;">M1</button>
+          <button data-tf="M5" class="tf-btn font-mono" style="background:transparent; color:#94A3B8; border:0; padding:3px 6px; font-size:11px; border-radius:4px; font-weight:600;">M5</button>
+          <button data-tf="M15" class="tf-btn font-mono" style="background:#38BDF8; color:#030D14; border:0; padding:3px 7px; font-size:11px; border-radius:4px; font-weight:700;">M15</button>
+          <button data-tf="H1" class="tf-btn font-mono" style="background:transparent; color:#94A3B8; border:0; padding:3px 6px; font-size:11px; border-radius:4px; font-weight:600;">H1</button>
+          <button data-tf="H4" class="tf-btn font-mono" style="background:transparent; color:#94A3B8; border:0; padding:3px 6px; font-size:11px; border-radius:4px; font-weight:600;">H4</button>
+          <button data-tf="D1" class="tf-btn font-mono" style="background:transparent; color:#94A3B8; border:0; padding:3px 6px; font-size:11px; border-radius:4px; font-weight:600;">D1</button>
         </div>
 
-        <!-- Core Account Metrics: Balance & Equity Only -->
-        <div class="flex items-center gap-3 sm:gap-4 font-mono text-xs">
+        <!-- Balance & Equity -->
+        <div style="display:flex; align-items:center; gap:12px; font-size:12px;" class="font-mono">
           <div>
-            <span class="text-slate-400 text-[10px]">Balance:</span>
-            <span id="hudBalanceDisplay" class="font-bold text-slate-100 ml-0.5">$20,450.00</span>
+            <span style="color:#64748B; font-size:10px;">Bal:</span>
+            <span id="hudBalanceDisplay" style="font-weight:700; color:#F8FAFC;">$20,450.00</span>
           </div>
           <div>
-            <span class="text-slate-400 text-[10px]">Equity:</span>
-            <span id="hudEquityDisplay" class="font-bold text-bull-dynamic ml-0.5">$20,654.00</span>
+            <span style="color:#64748B; font-size:10px;">Eq:</span>
+            <span id="hudEquityDisplay" class="text-bull-dynamic" style="font-weight:700;">$20,654.00</span>
           </div>
         </div>
       </div>
 
-      <!-- INTERACTIVE FULL-BLEED CANDLESTICK CHART AREA (100% Container Fill) -->
-      <div class="relative flex-1 w-full h-full overflow-hidden" id="chartWrapper">
-        <canvas id="tradingCanvas" class="w-full h-full block cursor-crosshair"></canvas>
-
-        <!-- Subtle Crosshair Readout Pill -->
-        <div id="crosshairInspectBar" class="hidden absolute top-12 left-3 z-20 pointer-events-none glass-hud px-2.5 py-1 rounded-lg font-mono text-[10px] text-slate-200 flex items-center gap-2.5">
-          <span id="chSymbolTf" class="font-bold text-sky-300">XAUUSD • M15</span>
-          <span id="ohlcReadout">O: 2641.20  H: 2643.80  L: 2640.50  C: 2642.50</span>
-          <span id="chDeltaInfo" class="text-sky-400"></span>
-        </div>
-
-        <!-- Toast Notification Inside Device -->
-        <div id="tradeToast" class="hidden absolute top-12 right-20 z-30 glass-hud px-3 py-1.5 rounded-xl border border-sky-500/40 text-xs font-mono text-white shadow-lg">
-          Đã khớp lệnh!
-        </div>
+      <!-- Subtle Crosshair Info Pill (Appears when dragging/hovering) -->
+      <div id="crosshairInspectBar" class="glass-hud hidden font-mono" style="position:absolute; top:calc(var(--sat) + 52px); left:calc(var(--sal) + 10px); z-index:20; padding:4px 10px; font-size:10px; display:flex; align-items:center; gap:8px;">
+        <span id="chSymbolTf" style="font-weight:700; color:#38BDF8;">XAUUSD • M15</span>
+        <span id="ohlcReadout" style="color:#CBD5E1;">O: 2641.20 H: 2643.80 L: 2640.50 C: 2642.50</span>
+        <span id="chDeltaInfo" style="color:#38BDF8;"></span>
       </div>
 
-      <!-- ULTRA-MINIMAL BOTTOM FLOATING EXECUTION BAR: Crosshair, Interpolated Volume, BUY, SELL, Close, Menu -->
-      <div class="glass-hud absolute bottom-2.5 left-3 right-3 z-20 px-3 py-1.5 rounded-xl flex items-center justify-between gap-2 pointer-events-auto">
+      <!-- Toast Notification -->
+      <div id="tradeToast" class="glass-hud hidden font-mono" style="position:absolute; top:calc(var(--sat) + 52px); right:calc(var(--sar) + 12px); z-index:30; padding:6px 14px; font-size:11px; color:#fff; border:1px solid rgba(56,189,248,0.4);">
+        Đã khớp lệnh!
+      </div>
 
-        <!-- Left: Crosshair Tool Toggle + Interpolated Volume Display -->
-        <div class="flex items-center gap-2">
-          <button id="btnCrosshairTool" class="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold border transition bg-sky-500/25 text-sky-300 border-sky-500/40 flex items-center gap-1" title="Công cụ Crosshair (+): Di chuyển hoặc giữ-kéo để đo khoảng cách Pip & Tiền">
-            <span>✢ Crosshair</span>
+      <!-- ULTRA-MINIMAL BOTTOM FLOATING EXECUTION BAR (Pinned to Safe Area Bottom) -->
+      <div id="bottomHudBar" class="glass-hud" style="position:absolute; bottom:calc(var(--sab) + 8px); left:calc(var(--sal) + 10px); right:calc(var(--sar) + 10px); z-index:20; padding:6px 12px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
+        
+        <!-- Left: Crosshair Toggle & Interpolated Volume -->
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button id="btnCrosshairTool" class="font-mono" style="background:rgba(56,189,248,0.2); color:#38BDF8; border:1px solid rgba(56,189,248,0.4); padding:6px 10px; border-radius:8px; font-size:11px; font-weight:600;">
+            ✢ Crosshair
           </button>
 
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-800 font-mono text-xs" title="Volume đã nội suy tự động từ Bảng Vốn">
-            <span class="text-slate-400 text-[10px]">Vol:</span>
-            <strong id="hudInterpolatedVol" class="text-white text-xs sm:text-sm">1.23</strong>
-            <span class="text-slate-400 text-[10px]">Lot</span>
+          <div style="background:#0F172A; border:1px solid #1E293B; padding:5px 10px; border-radius:8px; display:flex; align-items:center; gap:4px; font-size:12px;" class="font-mono">
+            <span style="color:#64748B; font-size:10px;">Vol:</span>
+            <strong id="hudInterpolatedVol" style="color:#F8FAFC; font-size:13px;">1.23</strong>
+            <span style="color:#64748B; font-size:10px;">Lot</span>
           </div>
         </div>
 
-        <!-- Right: Core Execution Buttons (BUY / SELL / Close / Hidden Drawer Trigger) -->
-        <div class="flex items-center gap-1.5">
-          <button id="btnSellExec" class="btn-bear-dynamic px-3.5 py-1.5 rounded-lg active:scale-95 transition font-bold text-xs sm:text-sm font-mono shadow">
+        <!-- Right: BUY / SELL / Close / Menu -->
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button id="btnSellExec" class="btn-bear-dynamic font-mono" style="border:0; padding:8px 16px; border-radius:10px; font-weight:800; font-size:13px;">
             SELL
           </button>
-          <button id="btnBuyExec" class="btn-bull-dynamic px-3.5 py-1.5 rounded-lg active:scale-95 transition font-bold text-xs sm:text-sm font-mono shadow">
+          <button id="btnBuyExec" class="btn-bull-dynamic font-mono" style="border:0; padding:8px 16px; border-radius:10px; font-weight:800; font-size:13px;">
             BUY
           </button>
-          <button id="btnCloseAllExec" class="px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 font-mono text-xs transition" title="Đóng toàn bộ lệnh đang mở">
+          <button id="btnCloseAllExec" class="font-mono" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:8px 12px; border-radius:10px; font-size:11px;">
             Close (<span id="openCountBadge">1</span>)
           </button>
-
-          <button id="btnToggleDrawer" class="px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-sky-300 border border-slate-700 font-mono text-xs transition" title="Mở bảng ẩn: Cặp tiền, Bảng Vốn, TP/SL, Màu Nến & Đăng nhập IC Markets">
+          <button id="btnToggleDrawer" class="font-mono" style="background:#1E293B; color:#38BDF8; border:1px solid #334155; padding:8px 12px; border-radius:10px; font-size:12px;">
             ☰ Menu
           </button>
         </div>
       </div>
 
-      <!-- SLIDE-UP GLASSMORPHIC HIDDEN DRAWER -->
-      <div id="bottomSheetDrawer" class="glass-drawer absolute inset-x-0 bottom-0 z-30 h-[84%] translate-y-full transition-transform duration-300 flex flex-col rounded-t-3xl">
-        <!-- Drawer Handle & Navigation Tabs -->
-        <div class="px-4 pt-3 pb-2 border-b border-slate-800 flex items-center justify-between flex-wrap gap-1.5">
-          <div class="flex items-center gap-1 flex-wrap">
-            <button data-tab="tabMatrix" id="btnTabMatrix" class="drawer-tab-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-sky-500 text-slate-950">
-              1. Bảng Vốn &amp; Nội suy TP/SL
-            </button>
-            <button data-tab="tabPositions" id="btnTabPositions" class="drawer-tab-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">
-              2. Lệnh Đang Mở (<span id="drawerPosCount">1</span>)
-            </button>
-            <button data-tab="tabAppearance" id="btnTabAppearance" class="drawer-tab-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">
-              3. Mã Giao Dịch &amp; Màu Nến
-            </button>
-            <button data-tab="tabApi" id="btnTabApi" class="drawer-tab-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 hover:text-white border border-emerald-500/30">
-              4. 🔑 Đăng nhập IC Markets (Live/Demo)
-            </button>
-          </div>
+    </div>
 
-          <button id="btnCloseDrawer" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs font-medium">
-            Đóng bảng ẩn ▼
+    <!-- SLIDE-UP GLASSMORPHIC HIDDEN DRAWER (Capital Matrix, Positions, Colors, Broker Login) -->
+    <div id="bottomSheetDrawer" class="glass-drawer" style="position:absolute; inset-inline:0; bottom:0; height:86%; z-index:40; transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); display:flex; flex-direction:column; border-radius:24px 24px 0 0; padding-bottom:var(--sab);">
+      
+      <!-- Drawer Header & Tabs -->
+      <div style="padding:12px 16px 8px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+        <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+          <button data-tab="tabMatrix" id="btnTabMatrix" style="background:#38BDF8; color:#030D14; border:0; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700;">
+            1. Bảng Vốn &amp; TP/SL
+          </button>
+          <button data-tab="tabPositions" id="btnTabPositions" style="background:transparent; color:#94A3B8; border:0; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600;">
+            2. Vị Thế Mở (<span id="drawerPosCount">1</span>)
+          </button>
+          <button data-tab="tabAppearance" id="btnTabAppearance" style="background:transparent; color:#94A3B8; border:0; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600;">
+            3. Mã &amp; Màu Nến
+          </button>
+          <button data-tab="tabApi" id="btnTabApi" style="background:rgba(16,185,129,0.15); color:#6EE7B7; border:1px solid rgba(16,185,129,0.3); padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700;">
+            4. 🔑 Đăng nhập IC Markets
           </button>
         </div>
 
-        <!-- Drawer Tab Content Area -->
-        <div class="flex-1 overflow-y-auto p-4">
+        <button id="btnCloseDrawer" style="background:#1E293B; color:#CBD5E1; border:0; padding:6px 12px; border-radius:8px; font-size:11px;">
+          Đóng bảng ẩn ▼
+        </button>
+      </div>
 
-          <!-- TAB 1: CAPITAL-TO-VOLUME & TP/SL LOOKUP MATRIX -->
-          <div id="tabMatrix" class="drawer-tab-pane space-y-3">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-              <div class="space-y-1.5">
-                <div class="text-xs font-semibold text-white flex items-center justify-between">
-                  <span>Vốn gốc (Balance) giả lập / thực tế:</span>
-                  <span id="simEquityLabel" class="font-mono text-sky-400 font-bold">$20,450</span>
-                </div>
-                <input id="simEquitySlider" type="range" min="1000" max="100000" step="250" value="20450" aria-label="Thanh trượt giả lập vốn Balance" class="w-full cursor-pointer" />
-                <div class="flex items-center gap-2 pt-1">
-                  <span class="text-[11px] text-slate-400">Chế độ tính Volume:</span>
-                  <div class="inline-flex rounded bg-slate-950 p-0.5 border border-slate-800 text-[11px]">
-                    <button id="btnVolModeAuto" class="px-2 py-0.5 rounded bg-sky-500 text-slate-950 font-semibold">Bảng Vốn</button>
-                    <button id="btnVolModeRisk05" class="px-2 py-0.5 rounded text-slate-400 hover:text-white font-mono">0.5%</button>
-                    <button id="btnVolModeRisk10" class="px-2 py-0.5 rounded text-slate-400 hover:text-white font-mono">1.0%</button>
-                    <button id="btnVolModeRisk20" class="px-2 py-0.5 rounded text-slate-400 hover:text-white font-mono">2.0%</button>
-                  </div>
-                </div>
-              </div>
+      <!-- Drawer Scrollable Content -->
+      <div style="flex:1; overflow-y:auto; padding:16px;">
+        
+        <!-- TAB 1: CAPITAL MATRIX & VOLUME INTERPOLATION -->
+        <div id="tabMatrix" class="drawer-tab-pane" style="display:flex; flex-direction:column; gap:12px;">
+          <div style="background:rgba(15,23,42,0.8); border:1px solid #1E293B; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+              <span>Vốn gốc (Balance): <strong id="simEquityLabel" style="color:#38BDF8;" class="font-mono">$20,450</strong></span>
+              <span id="matrixStatusOverlay" style="color:#38BDF8; font-size:11px;" class="font-mono">Nội suy: 1.23 Lots</span>
+            </div>
+            <input id="simEquitySlider" type="range" min="1000" max="100000" step="250" value="20450" style="width:100%;" />
+            
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:11px; padding-top:4px;">
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="chkLinearInterp" checked />
+                <span>Nội suy tuyến tính Volume giữa các bậc vốn</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="chkInterpolateSl" checked />
+                <span>Nội suy khoảng cách TP/SL theo Volume (Khóa trần lỗ $)</span>
+              </label>
+            </div>
+          </div>
 
-              <div class="space-y-1.5 text-xs flex flex-col justify-center">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" id="chkLinearInterp" checked class="rounded bg-slate-800 border-slate-600 text-sky-500" />
-                  <span>Nội suy tuyến tính Volume giữa các bậc vốn</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" id="chkInterpolateSl" checked class="rounded bg-slate-800 border-slate-600 text-sky-500" />
-                  <span>Nội suy khoảng cách TP/SL theo Volume (Khóa trần lỗ $)</span>
-                </label>
-                <div class="flex items-center justify-between pt-1">
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-slate-400">Tỷ lệ R:R:</span>
-                    <select id="rrRatioSelect" aria-label="Tỷ lệ Reward trên Risk" class="bg-slate-800 text-white font-mono px-2 py-0.5 rounded border border-slate-700">
-                      <option value="1.5">1 : 1.5</option>
-                      <option value="2.0" selected>1 : 2.0</option>
-                      <option value="3.0">1 : 3.0</option>
-                    </select>
-                  </div>
-                  <div class="flex items-center gap-1 font-mono">
-                    <span class="text-slate-400">Chỉnh tay Lot:</span>
-                    <button id="btnLotMinus" class="w-6 h-6 rounded bg-slate-800 text-white font-bold">-</button>
-                    <input id="inputLotSize" type="number" step="0.01" min="0.01" max="100" value="1.23" aria-label="Khối lượng Lot" class="w-14 bg-slate-950 text-center font-bold text-xs text-sky-300 py-0.5 rounded border border-slate-700" />
-                    <button id="btnLotPlus" class="w-6 h-6 rounded bg-slate-800 text-white font-bold">+</button>
-                  </div>
-                </div>
+          <!-- Matrix Table -->
+          <div style="overflow-x:auto; border:1px solid #1E293B; border-radius:12px;">
+            <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left;" class="font-mono">
+              <thead>
+                <tr style="background:#0F172A; color:#94A3B8; border-bottom:1px solid #1E293B;">
+                  <th style="padding:8px 10px;">Bậc Vốn ($)</th>
+                  <th style="padding:8px 10px;">Volume (Lot)</th>
+                  <th style="padding:8px 10px;">Rủi ro ($/lệnh)</th>
+                  <th style="padding:8px 10px;">SL (pips)</th>
+                  <th style="padding:8px 10px;">TP (pips)</th>
+                  <th style="padding:8px 10px; text-align:right;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="matrixTableBody" style="background:#090D14;"></tbody>
+            </table>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <button id="btnAddMatrixTier" style="background:rgba(56,189,248,0.2); color:#38BDF8; border:1px solid rgba(56,189,248,0.4); padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600;">
+              + Thêm Bậc Vốn Mới
+            </button>
+            <span id="formulaExplanation" style="color:#64748B; font-size:10px;" class="font-mono">
+              V(E) = V₁ + ((E - E₁)/(E₂ - E₁)) × (V₂ - V₁)
+            </span>
+          </div>
+        </div>
+
+        <!-- TAB 2: ACTIVE POSITIONS -->
+        <div id="tabPositions" class="drawer-tab-pane hidden" style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; font-size:12px;" class="font-mono">
+            <span>Floating PnL: <strong id="hudOpenPnl" class="text-bull-dynamic">+$204.00</strong></span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="color:#64748B; font-size:11px;">Loại lệnh:</span>
+              <select id="orderTypeSelect" style="background:#090D14; color:#F8FAFC; border:1px solid #334155; padding:4px 8px; border-radius:6px; font-size:11px;" class="font-mono">
+                <option value="MARKET">MARKET</option>
+                <option value="LIMIT">LIMIT (@Entry)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto; border:1px solid #1E293B; border-radius:12px;">
+            <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left;" class="font-mono">
+              <thead>
+                <tr style="background:#0F172A; color:#94A3B8; border-bottom:1px solid #1E293B;">
+                  <th style="padding:8px 10px;">Mã / Loại</th>
+                  <th style="padding:8px 10px;">Lots</th>
+                  <th style="padding:8px 10px;">Giá Vào</th>
+                  <th style="padding:8px 10px;">SL / TP</th>
+                  <th style="padding:8px 10px;">PnL ($)</th>
+                  <th style="padding:8px 10px; text-align:right;">Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="positionsTableBody" style="background:#090D14;"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 3: SYMBOL & CANDLE COLORS -->
+        <div id="tabAppearance" class="drawer-tab-pane hidden" style="display:flex; flex-direction:column; gap:12px; font-size:12px;">
+          <div style="background:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:#94A3B8;">Cặp giao dịch:</span>
+              <select id="symbolSelect" style="background:#090D14; color:#F8FAFC; border:1px solid #334155; padding:4px 10px; border-radius:6px; font-weight:700;">
+                <option value="XAUUSD">XAUUSD (Gold Raw)</option>
+                <option value="EURUSD">EURUSD (Raw ECN)</option>
+                <option value="GBPUSD">GBPUSD (Raw ECN)</option>
+                <option value="US30">US30 (Wall St 30)</option>
+                <option value="BTCUSD">BTCUSD (Crypto CFD)</option>
+              </select>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:#94A3B8;">Nến Tăng &amp; Nút BUY:</span>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <input type="color" id="inputBullColor" value="#38BDF8" style="background:transparent; border:0; width:30px; height:26px; cursor:pointer;" />
+                <span id="labelBullHex" class="font-mono" style="color:#38BDF8;">#38BDF8</span>
               </div>
             </div>
 
-            <!-- Readout Summary inside Drawer -->
-            <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-900/60 border border-slate-800 font-mono text-xs">
-              <span id="matrixStatusOverlay" class="text-sky-300">● Nội suy: Equity $20.65k → 1.24 Lots</span>
-              <div class="flex items-center gap-3">
-                <span class="text-rose-400">SL dự kiến: <strong id="hudSlPips">32.5</strong>p (<span id="hudSlUsd">-$403</span>)</span>
-                <span class="text-sky-400">TP dự kiến: <strong id="hudTpPips">65.0</strong>p (<span id="hudTpUsd">+$806</span>)</span>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:#94A3B8;">Nến Giảm &amp; Nút SELL:</span>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <input type="color" id="inputBearColor" value="#991B1B" style="background:transparent; border:0; width:30px; height:26px; cursor:pointer;" />
+                <span id="labelBearHex" class="font-mono" style="color:#EF4444;">#991B1B</span>
               </div>
             </div>
 
-            <!-- Editable Lookup Matrix Table -->
-            <div class="overflow-x-auto rounded-xl border border-slate-800">
-              <table class="w-full text-left border-collapse text-xs font-mono">
-                <thead>
-                  <tr class="bg-slate-900/90 text-slate-400 border-b border-slate-800">
-                    <th class="py-2 px-3">Bậc Vốn (Equity $)</th>
-                    <th class="py-2 px-3">Volume Chuẩn (Lots)</th>
-                    <th class="py-2 px-3">Rủi ro Tối đa ($/lệnh)</th>
-                    <th class="py-2 px-3">SL Khai Trước (Pips)</th>
-                    <th class="py-2 px-3">TP Khai Trước (Pips)</th>
-                    <th class="py-2 px-3 text-right">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody id="matrixTableBody" class="divide-y divide-slate-800/70 bg-slate-950/60"></tbody>
-              </table>
-            </div>
-
-            <div class="flex items-center justify-between">
-              <button id="btnAddMatrixTier" class="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/30 hover:bg-sky-500/30 text-xs font-medium">
-                + Thêm Bậc Vốn Mới
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-top:4px;">
+              <button id="btnToggleLines" style="background:rgba(56,189,248,0.2); color:#38BDF8; border:1px solid rgba(56,189,248,0.4); padding:4px 10px; border-radius:6px; font-size:11px;" class="font-mono">
+                Đường TP/SL: BẬT
               </button>
-              <span id="formulaExplanation" class="text-[11px] text-slate-400 font-mono hidden sm:inline">
-                V(E) = V₁ + ((E - E₁)/(E₂ - E₁)) × (V₂ - V₁)
-              </span>
+              <button id="btnResetColors" style="background:#1E293B; color:#CBD5E1; border:0; padding:4px 10px; border-radius:6px; font-size:11px;">
+                Đặt lại màu chuẩn
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: REAL IC MARKETS LOGIN -->
+        <div id="tabApi" class="drawer-tab-pane hidden" style="display:flex; flex-direction:column; gap:12px; font-size:12px;">
+          
+          <div style="background:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="color:#94A3B8;">Giao thức:</span>
+              <button id="btnApiCtrader" style="background:#38BDF8; color:#030D14; border:0; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700;">
+                cTrader Open API
+              </button>
+              <button id="btnApiMt4" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:4px 10px; border-radius:6px; font-size:11px;">
+                MT4 MetaApi
+              </button>
+            </div>
+            <span id="liveConnStateLabel" class="font-mono" style="background:rgba(245,158,11,0.2); color:#FBBF24; border:1px solid rgba(245,158,11,0.3); padding:3px 8px; border-radius:6px; font-size:11px;">
+              ● Đang chạy Giả lập (SIM)
+            </span>
+          </div>
+
+          <!-- cTrader Login Box -->
+          <div id="formCtraderPanel" style="background:#0F172A; border:1px solid rgba(56,189,248,0.4); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong style="color:#38BDF8;">Đăng nhập cTrader Open API</strong>
+              <select id="ctraderEnvSelect" style="background:#090D14; color:#38BDF8; border:1px solid #334155; padding:3px 8px; border-radius:6px; font-size:11px;" class="font-mono">
+                <option value="wss://demo.ctraderapi.com:5036">DEMO (:5036)</option>
+                <option value="wss://live.ctraderapi.com:5036">LIVE (:5036)</option>
+              </select>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px;">
+              <div>
+                <label style="display:block; font-size:10px; color:#64748B; margin-bottom:2px;">App Client ID</label>
+                <input id="inpCtraderClientId" type="text" placeholder="Client ID từ openapi.ctrader.com..." style="width:100%; background:#090D14; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
+              </div>
+              <div>
+                <label style="display:block; font-size:10px; color:#64748B; margin-bottom:2px;">App Client Secret</label>
+                <input id="inpCtraderSecret" type="password" placeholder="Client Secret..." style="width:100%; background:#090D14; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
+              </div>
+              <div>
+                <label style="display:block; font-size:10px; color:#64748B; margin-bottom:2px;">Access Token</label>
+                <input id="inpCtraderToken" type="password" placeholder="OAuth Access Token..." style="width:100%; background:#090D14; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
+              </div>
+              <div>
+                <label style="display:block; font-size:10px; color:#64748B; margin-bottom:2px;">cTrader Account ID</label>
+                <input id="inpCtraderAccountId" type="number" placeholder="VD: 4092817..." style="width:100%; background:#090D14; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; padding-top:4px;">
+              <button id="btnConnectCtraderLive" style="background:#38BDF8; color:#030D14; border:0; padding:7px 16px; border-radius:8px; font-size:12px; font-weight:700;">
+                Kết nối cTrader Thật
+              </button>
             </div>
           </div>
 
-          <!-- TAB 2: ACTIVE POSITIONS & PENDING ORDERS -->
-          <div id="tabPositions" class="drawer-tab-pane hidden space-y-2.5">
-            <div class="flex items-center justify-between text-xs font-mono bg-slate-900/80 px-3 py-2 rounded-xl border border-slate-800">
-              <span>Tổng Lợi Nhuận Nổi (Floating PnL): <strong id="hudOpenPnl" class="text-bull-dynamic">+$204.00</strong></span>
-              <div class="flex items-center gap-2">
-                <span class="text-slate-400">Loại lệnh vào:</span>
-                <select id="orderTypeSelect" aria-label="Loại lệnh" class="bg-slate-950 text-slate-200 font-mono text-xs px-2 py-1 rounded border border-slate-700">
-                  <option value="MARKET">MARKET (Khớp ngay)</option>
-                  <option value="LIMIT">LIMIT (Theo đường Entry)</option>
-                </select>
-              </div>
+          <!-- MT4 MetaApi Login Box -->
+          <div id="formMt4Panel" style="display:none; background:#0F172A; border:1px solid rgba(245,158,11,0.4); border-radius:12px; padding:14px; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong style="color:#FBBF24;">Đăng nhập IC Markets MT4 (MetaApi)</strong>
+              <select id="mt4RegionSelect" style="background:#090D14; color:#FBBF24; border:1px solid #334155; padding:3px 8px; border-radius:6px; font-size:11px;" class="font-mono">
+                <option value="https://mt-client-api-v1.singapore.agiliumtrade.ai">Singapore</option>
+                <option value="https://mt-client-api-v1.london.agiliumtrade.ai">London</option>
+              </select>
             </div>
 
-            <div class="overflow-x-auto rounded-xl border border-slate-800">
-              <table class="w-full text-left border-collapse text-xs font-mono">
-                <thead>
-                  <tr class="bg-slate-900 text-slate-400 border-b border-slate-800">
-                    <th class="py-2 px-3">Mã / Loại</th>
-                    <th class="py-2 px-3">Lots</th>
-                    <th class="py-2 px-3">Giá Vào</th>
-                    <th class="py-2 px-3">SL / TP</th>
-                    <th class="py-2 px-3">Lợi nhuận (PnL)</th>
-                    <th class="py-2 px-3 text-right">Hành động</th>
-                  </tr>
-                </thead>
-                <tbody id="positionsTableBody" class="divide-y divide-slate-800/70 bg-slate-950/60"></tbody>
-              </table>
+            <div>
+              <label style="display:block; font-size:10px; color:#64748B; margin-bottom:2px;">MetaApi Access Token</label>
+              <input id="inpMt4Token" type="password" placeholder="JWT Token từ app.metaapi.cloud..." style="width:100%; background:#090D14; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
+            </div>
+            <div>
+              <label style="display:block; font-size:10px; color:#64748B; margin-bottom:2px;">MetaApi MT4 Account ID</label>
+              <input id="inpMt4AccountId" type="text" placeholder="UUID tài khoản MT4..." style="width:100%; background:#090D14; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; padding-top:4px;">
+              <button id="btnConnectMt4Live" style="background:#FBBF24; color:#030D14; border:0; padding:7px 16px; border-radius:8px; font-size:12px; font-weight:700;">
+                Kết nối MT4 Thật
+              </button>
             </div>
           </div>
 
-          <!-- TAB 3: APPEARANCE (CANDLE COLORS), SYMBOL & CHART OVERLAY SETTINGS -->
-          <div id="tabAppearance" class="drawer-tab-pane hidden space-y-3 text-xs">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
-                <div class="font-semibold text-white">Cặp Giao Dịch &amp; Hiển Thị Trên Chart</div>
-                <div class="flex items-center justify-between">
-                  <span class="text-slate-400">Chọn cặp tiền (IC Markets):</span>
-                  <select id="symbolSelect" aria-label="Chọn cặp giao dịch" class="bg-slate-950 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg border border-slate-700">
-                    <option value="XAUUSD">XAUUSD (Gold Raw)</option>
-                    <option value="EURUSD">EURUSD (Raw ECN)</option>
-                    <option value="GBPUSD">GBPUSD (Raw ECN)</option>
-                    <option value="US30">US30 (Wall St 30)</option>
-                    <option value="BTCUSD">BTCUSD (Crypto CFD)</option>
-                  </select>
-                </div>
-
-                <div class="flex items-center justify-between font-mono">
-                  <span class="text-slate-400">Giá hiện tại / Spread:</span>
-                  <div>
-                    <span id="livePriceDisplay" class="font-bold text-bull-dynamic">2642.50</span>
-                    <span id="liveSpreadBadge" class="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">Spread: 1.2p</span>
-                  </div>
-                </div>
-
-                <div class="flex items-center justify-between pt-1">
-                  <span class="text-slate-400">Đường kéo TP/SL dự kiến trên Chart:</span>
-                  <button id="btnToggleLines" class="px-2.5 py-1 rounded-lg text-xs font-mono bg-sky-500/20 text-sky-300 border border-sky-500/30">
-                    Đường TP/SL: BẬT
-                  </button>
-                </div>
-
-                <label class="flex items-center justify-between pt-1 cursor-pointer">
-                  <span class="text-slate-400">Hiển thị đường EMA 20 / EMA 50:</span>
-                  <input type="checkbox" id="chkShowEma" class="rounded bg-slate-800 border-slate-600 text-sky-500" />
-                </label>
-              </div>
-
-              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
-                <div class="font-semibold text-white">Tùy Chỉnh Màu Nến &amp; Nút BUY / SELL</div>
-                <p class="text-[11px] text-slate-400">Mặc định: Nến Tăng &amp; nút BUY màu Xanh Blue nhạt (`#38BDF8`), Nến Giảm &amp; nút SELL màu Đỏ sẫm (`#991B1B`).</p>
-
-                <div class="flex items-center justify-between">
-                  <span class="text-slate-300">Màu Nến Tăng &amp; Nút BUY:</span>
-                  <div class="flex items-center gap-2">
-                    <input type="color" id="inputBullColor" value="#38BDF8" aria-label="Màu nến tăng và nút Buy" class="w-8 h-7 rounded cursor-pointer bg-transparent border-0" />
-                    <span id="labelBullHex" class="font-mono text-xs text-sky-300">#38BDF8</span>
-                  </div>
-                </div>
-
-                <div class="flex items-center justify-between">
-                  <span class="text-slate-300">Màu Nến Giảm &amp; Nút SELL:</span>
-                  <div class="flex items-center gap-2">
-                    <input type="color" id="inputBearColor" value="#991B1B" aria-label="Màu nến giảm và nút Sell" class="w-8 h-7 rounded cursor-pointer bg-transparent border-0" />
-                    <span id="labelBearHex" class="font-mono text-xs text-red-400">#991B1B</span>
-                  </div>
-                </div>
-
-                <div class="pt-1 flex items-center gap-2">
-                  <button id="btnResetColors" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">
-                    Khôi phục mặc định (Xanh Blue nhạt / Đỏ sẫm)
-                  </button>
-                </div>
-              </div>
+          <!-- Log Console -->
+          <div style="background:#06080C; border:1px solid #1E293B; border-radius:10px; padding:8px 12px; font-size:10px;" class="font-mono">
+            <div style="color:#64748B; margin-bottom:4px; display:flex; justify-content:space-between;">
+              <span>Nhật ký kết nối sàn:</span>
+              <button id="btnClearApiLog" style="background:transparent; border:0; color:#64748B; cursor:pointer;">Xóa log</button>
             </div>
-          </div>
-
-          <!-- TAB 4: REAL IC MARKETS SIGN-IN & LIVE WEBSOCKET / REST EXECUTION -->
-          <div id="tabApi" class="drawer-tab-pane hidden space-y-3 text-xs">
-            <!-- Top Protocol & Live/Sim Switchbar -->
-            <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-              <div class="flex items-center gap-2">
-                <span class="font-semibold text-white">Chọn Nền Tảng Tài Khoản IC Markets:</span>
-                <button id="btnApiCtrader" class="px-2.5 py-1 rounded-md text-xs font-mono transition bg-sky-500 text-slate-950 font-bold">
-                  1. cTrader Open API (WebSocket :5036)
-                </button>
-                <button id="btnApiMt4" class="px-2.5 py-1 rounded-md text-xs font-mono transition bg-slate-800 text-slate-300 hover:text-white">
-                  2. MT4 / MT5 (MetaApi Cloud REST)
-                </button>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <span id="liveConnStateLabel" class="font-mono text-[11px] px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  ● Đang chạy Chế độ Giả lập (Simulation)
-                </span>
-                <button id="btnDisconnectLive" class="hidden px-2.5 py-1 rounded bg-rose-600/30 text-rose-300 border border-rose-500/40 font-mono text-[11px]">
-                  Ngắt kết nối &amp; Về Giả lập
-                </button>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <!-- FORM 1: IC MARKETS CTRADER OPEN API (LIVE / DEMO WEBSOCKET) -->
-              <div id="formCtraderPanel" class="p-3.5 rounded-xl bg-slate-900/90 border border-sky-500/40 space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="font-bold text-sky-400">Đăng nhập IC Markets cTrader (Open API)</span>
-                  <select id="ctraderEnvSelect" aria-label="Môi trường cTrader" class="bg-slate-950 text-sky-300 font-mono text-[11px] px-2 py-1 rounded border border-slate-700">
-                    <option value="wss://demo.ctraderapi.com:5036">DEMO (wss://demo.ctraderapi.com:5036)</option>
-                    <option value="wss://live.ctraderapi.com:5036">LIVE (wss://live.ctraderapi.com:5036)</option>
-                  </select>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div>
-                    <label class="block text-[10px] text-slate-400 mb-0.5">App Client ID (Spotware Open API)</label>
-                    <input id="inpCtraderClientId" type="text" placeholder="VD: 9482_a8f92k..." class="w-full bg-slate-950 text-white font-mono text-xs px-2.5 py-1.5 rounded border border-slate-700" />
-                  </div>
-                  <div>
-                    <label class="block text-[10px] text-slate-400 mb-0.5">App Client Secret</label>
-                    <input id="inpCtraderSecret" type="password" placeholder="Nhập Client Secret..." class="w-full bg-slate-950 text-white font-mono text-xs px-2.5 py-1.5 rounded border border-slate-700" />
-                  </div>
-                  <div>
-                    <label class="block text-[10px] text-slate-400 mb-0.5">OAuth Access Token</label>
-                    <input id="inpCtraderToken" type="password" placeholder="Nhập Access Token..." class="w-full bg-slate-950 text-white font-mono text-xs px-2.5 py-1.5 rounded border border-slate-700" />
-                  </div>
-                  <div>
-                    <label class="block text-[10px] text-slate-400 mb-0.5">cTrader Account ID (`ctidTraderAccountId`)</label>
-                    <input id="inpCtraderAccountId" type="number" placeholder="VD: 4092817" class="w-full bg-slate-950 text-white font-mono text-xs px-2.5 py-1.5 rounded border border-slate-700" />
-                  </div>
-                </div>
-
-                <div class="flex items-center justify-between pt-1">
-                  <span class="text-[10px] text-slate-400">Lấy miễn phí tại `openapi.ctrader.com` (Lưu cục bộ trên máy bạn)</span>
-                  <button id="btnConnectCtraderLive" class="px-3.5 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs transition">
-                    Kết nối cTrader Thật
-                  </button>
-                </div>
-              </div>
-
-              <!-- FORM 2: IC MARKETS MT4 / MT5 VIA METAAPI CLOUD BRIDGE -->
-              <div id="formMt4Panel" class="p-3.5 rounded-xl bg-slate-900/90 border border-amber-500/40 space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="font-bold text-amber-300">Đăng nhập IC Markets MT4 / MT5 (Qua MetaApi)</span>
-                  <select id="mt4RegionSelect" aria-label="Cụm máy chủ MetaApi" class="bg-slate-950 text-amber-300 font-mono text-[11px] px-2 py-1 rounded border border-slate-700">
-                    <option value="https://mt-client-api-v1.singapore.agiliumtrade.ai">Singapore (Độ trễ thấp nhất từ VN)</option>
-                    <option value="https://mt-client-api-v1.london.agiliumtrade.ai">London (LD4 Equinix)</option>
-                    <option value="https://mt-client-api-v1.new-york.agiliumtrade.ai">New York (NY4 Equinix)</option>
-                  </select>
-                </div>
-
-                <div class="grid grid-cols-1 gap-2">
-                  <div>
-                    <label class="block text-[10px] text-slate-400 mb-0.5">MetaApi Access Token (`auth-token` lấy tại `app.metaapi.cloud`)</label>
-                    <input id="inpMt4Token" type="password" placeholder="Dán JWT Token từ MetaApi Cloud..." class="w-full bg-slate-950 text-white font-mono text-xs px-2.5 py-1.5 rounded border border-slate-700" />
-                  </div>
-                  <div>
-                    <label class="block text-[10px] text-slate-400 mb-0.5">MetaApi MT4 Account ID (UUID của tài khoản IC Markets MT4)</label>
-                    <input id="inpMt4AccountId" type="text" placeholder="VD: 3f8a92c1-74b2-4d1e-9a12-..." class="w-full bg-slate-950 text-white font-mono text-xs px-2.5 py-1.5 rounded border border-slate-700" />
-                  </div>
-                </div>
-
-                <div class="flex items-center justify-between pt-1">
-                  <span class="text-[10px] text-slate-400">Hỗ trợ mọi tài khoản MT4/MT5 Raw Spread &amp; Standard</span>
-                  <button id="btnConnectMt4Live" class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition">
-                    Kết nối MT4 Thật
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Live API Connection Log Console -->
-            <div class="p-2.5 rounded-xl bg-black/80 border border-slate-800 font-mono text-[11px]">
-              <div class="text-slate-400 mb-1 flex items-center justify-between">
-                <span>Nhật ký kết nối sàn &amp; Khớp lệnh (Live Socket / REST Log):</span>
-                <button id="btnClearApiLog" class="text-[10px] text-slate-500 hover:text-slate-300">Xóa log</button>
-              </div>
-              <div id="apiConsoleLog" class="h-20 overflow-y-auto space-y-0.5 text-emerald-400">
-                <div>[Hệ thống] Đang chạy chế độ Giả lập (Simulation). Nhập thông số cTrader hoặc MT4 ở trên để kết nối tài khoản thật.</div>
-              </div>
+            <div id="apiConsoleLog" style="height:70px; overflow-y:auto; color:#38BDF8;">
+              <div>[Hệ thống] Đang chạy chế độ Giả lập. Nhập thông số cTrader hoặc MT4 để bắt đầu trade tài khoản thật.</div>
             </div>
           </div>
 
         </div>
+
       </div>
 
     </div>
-  </main>
 
-  <!-- MODAL: COMPLETE XCODE / SWIFTUI SOURCE CODE VIEWER & COPY -->
-  <div id="swiftCodeModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
-    <div class="bg-[#0D1118] border border-[#1A2230] rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden shadow-2xl">
-      <div class="px-4 py-3 border-b border-[#1A2230] flex items-center justify-between gap-2">
-        <div>
-          <h2 class="font-bold text-sm sm:text-base text-white">Mã nguồn iOS Native (SwiftUI + Crosshair + Xoay Màn Hình Mở/Gập + IC Markets API)</h2>
-          <p class="text-xs text-slate-400">Hỗ trợ iPhone Duo (7.6" &amp; 5.4" ở cả Landscape và Portrait), tùy chỉnh màu nến &amp; nội suy Volume/TP-SL</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button id="btnCopySwiftCode" class="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold transition">
-            Sao chép toàn bộ Swift Code
-          </button>
-          <button id="btnCloseSwiftModal" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
-            Đóng ✕
-          </button>
-        </div>
-      </div>
-
-      <div class="px-4 py-2 bg-[#06080C] border-b border-[#1A2230] flex items-center gap-2 overflow-x-auto text-xs font-mono">
-        <button data-swift="fileRiskEngine" class="swift-file-btn px-3 py-1 rounded bg-sky-500/25 text-sky-300 border border-sky-500/40">1. RiskAndVolumeEngine.swift</button>
-        <button data-swift="fileCTraderService" class="swift-file-btn px-3 py-1 rounded text-slate-400 hover:text-white">2. ICMarketsService.swift (cTrader + MT4)</button>
-        <button data-swift="fileDuoViews" class="swift-file-btn px-3 py-1 rounded text-slate-400 hover:text-white">3. DuoTradingView.swift (Crosshair + Xoay Màn Hình)</button>
-      </div>
-
-      <pre id="swiftCodeDisplay" class="flex-1 overflow-auto p-4 font-mono text-xs leading-relaxed text-sky-300 bg-[#05080D] select-all"></pre>
-    </div>
   </div>
 
   <script>
     // =========================================================================
-    // 1. STATE & GROUNDED INSTRUMENT CONFIGURATION (IC Markets Raw Spread)
+    // 1. STATE & INSTRUMENT SPECIFICATIONS
     // =========================================================================
     const INSTRUMENTS = {
       XAUUSD: { name: 'XAUUSD', symbolId: 41, basePrice: 2642.50, pipSize: 0.10, pipValuePerLot: 10.0, spreadPips: 1.2, digits: 2 },
@@ -560,44 +485,39 @@
     };
 
     const state = {
-      deviceMode: 'UNFOLDED',      // 'UNFOLDED' (7.6" 1878x2670) or 'FOLDED' (5.4" 1398x2034)
+      isStandalonePWA: window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches,
+      deviceFoldState: 'UNFOLDED', // 'FOLDED' (5.4") or 'UNFOLDED' (7.6")
       orientation: 'LANDSCAPE',    // 'LANDSCAPE' or 'PORTRAIT'
-      apiRoute: 'CTRADER',         // 'CTRADER' (:5036) or 'MT4' (MetaApi Cloud)
       executionMode: 'SIM',        // 'SIM' | 'LIVE_CTRADER' | 'LIVE_MT4'
+      apiRoute: 'CTRADER',
       symbol: 'XAUUSD',
       timeframe: 'M15',
       balance: 20450.00,
       equity: 20654.00,
-      volMode: 'AUTO_MATRIX',      // 'AUTO_MATRIX', 'RISK_05', 'RISK_10', 'RISK_20', 'MANUAL'
+      lotSize: 1.23,
+      volMode: 'AUTO_MATRIX',
       linearInterpolation: true,
       interpolateSlByVol: true,
       rrRatio: 2.0,
-      lotSize: 1.23,
-      showOverlayLines: true,
-      showEma: false,
       orderType: 'MARKET',
+      showOverlayLines: true,
 
-      // Custom Candle & Button Colors (Default: Light Blue #38BDF8 & Dark Red #991B1B)
       bullColor: '#38BDF8',
       bearColor: '#991B1B',
 
-      // Crosshair & Ruler Tool State
       crosshairEnabled: true,
       crosshairPos: null,
       rulerAnchor: null,
 
-      // On-chart interactive lines (prices)
       entryLinePrice: 2642.50,
       slLinePrice: 2639.25,
       tpLinePrice: 2649.00,
       draggingLine: null,
 
-      // Live Connection Handles
       ctraderSocket: null,
       ctraderHeartbeatTimer: null,
       mt4PollTimer: null,
 
-      // Pre-declared Capital-to-Volume & TP/SL Lookup Matrix
       capitalMatrix: [
         { equity: 5000,  lots: 0.25, maxRiskUsd: 100, slPips: 40, tpPips: 80 },
         { equity: 10000, lots: 0.50, maxRiskUsd: 200, slPips: 40, tpPips: 80 },
@@ -605,7 +525,6 @@
         { equity: 50000, lots: 3.00, maxRiskUsd: 1000, slPips: 33, tpPips: 66 }
       ],
 
-      // Active Open Positions
       positions: [
         {
           id: 'POS-9041',
@@ -621,237 +540,78 @@
       candles: []
     };
 
-    function logApiMessage(msg, isError = false) {
+    function logApiMessage(msg, isErr = false) {
       const box = document.getElementById('apiConsoleLog');
       if (!box) return;
-      const line = document.createElement('div');
-      const now = new Date().toLocaleTimeString('vi-VN');
-      line.className = isError ? 'text-rose-400' : 'text-emerald-400';
-      line.textContent = `[${now}] ${msg}`;
-      box.prepend(line);
+      const d = document.createElement('div');
+      d.style.color = isErr ? '#F87171' : '#38BDF8';
+      d.textContent = `[${new Date().toLocaleTimeString('vi-VN')}] ${msg}`;
+      box.prepend(d);
     }
 
     // =========================================================================
-    // 2. LIVE IC MARKETS CONNECTION ENGINE (cTrader WebSocket + MT4 MetaApi REST)
+    // 2. AUTOMATIC HARDWARE SCREEN ROTATION & FOLD DETECTION
     // =========================================================================
-    function loadSavedCredentials() {
-      try {
-        const saved = JSON.parse(localStorage.getItem('duotrade_ic_creds') || '{}');
-        if (saved.ctraderClientId) document.getElementById('inpCtraderClientId').value = saved.ctraderClientId;
-        if (saved.ctraderAccountId) document.getElementById('inpCtraderAccountId').value = saved.ctraderAccountId;
-        if (saved.mt4AccountId) document.getElementById('inpMt4AccountId').value = saved.mt4AccountId;
-      } catch (e) {}
-    }
+    function detectRealScreenAndLayout() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const isLandscape = w > h;
+      state.orientation = isLandscape ? 'LANDSCAPE' : 'PORTRAIT';
 
-    function saveCredentialsLocal(data) {
-      try {
-        localStorage.setItem('duotrade_ic_creds', JSON.stringify(data));
-      } catch (e) {}
-    }
+      // iPhone Duo screen classification:
+      // Inner unfolded screen: min dimension ~ 640px+, aspect ratio 1.41:1
+      // Outer folded screen: min dimension < 520px
+      const minDim = Math.min(w, h);
+      const isFolded = minDim < 540;
+      state.deviceFoldState = isFolded ? 'FOLDED' : 'UNFOLDED';
 
-    // 2A. Connect Live IC Markets cTrader Open API (WebSocket JSON :5036)
-    function connectLiveCTrader() {
-      const wsUrl = document.getElementById('ctraderEnvSelect').value;
-      const clientId = document.getElementById('inpCtraderClientId').value.trim();
-      const clientSecret = document.getElementById('inpCtraderSecret').value.trim();
-      const accessToken = document.getElementById('inpCtraderToken').value.trim();
-      const accountId = parseInt(document.getElementById('inpCtraderAccountId').value.trim(), 10);
+      const badge = document.getElementById('screenDetectBadge');
+      const crease = document.getElementById('hardwareHingeCrease');
 
-      if (!clientId || !clientSecret || !accessToken || !accountId) {
-        logApiMessage('Vui lòng nhập đủ Client ID, Client Secret, Access Token và Account ID của cTrader.', true);
-        showToast('Thiếu thông tin đăng nhập cTrader!');
-        return;
+      if (badge) {
+        badge.textContent = `${state.deviceFoldState === 'UNFOLDED' ? 'Mở 7.6"' : 'Gập 5.4"'} • ${isLandscape ? 'Ngang' : 'Dọc'} (${w}×${h}px)`;
       }
 
-      saveCredentialsLocal({ ctraderClientId: clientId, ctraderAccountId: accountId });
-      disconnectLiveBroker(false);
-
-      logApiMessage(`Đang mở kết nối WebSocket tới ${wsUrl}...`);
-      try {
-        const ws = new WebSocket(wsUrl);
-        state.ctraderSocket = ws;
-
-        ws.onopen = () => {
-          logApiMessage('Đã kết nối cổng :5036! Đang gửi ProtoOAApplicationAuthReq (2100)...');
-          // 1. Authenticate Application (payloadType: 2100)
-          ws.send(JSON.stringify({
-            clientMsgId: 'app-auth-1',
-            payloadType: 2100,
-            payload: { clientId, clientSecret }
-          }));
-
-          // Start 10-second ProtoHeartbeatEvent (payloadType: 51)
-          state.ctraderHeartbeatTimer = setInterval(() => {
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ clientMsgId: 'hb', payloadType: 51 }));
-            }
-          }, 10000);
-        };
-
-        ws.onmessage = (evt) => {
-          try {
-            const msg = JSON.parse(evt.data);
-            const pt = msg.payloadType;
-
-            if (pt === 2101) {
-              // ProtoOAApplicationAuthRes -> Send ProtoOAAccountAuthReq (2102)
-              logApiMessage('Xác thực App thành công (2101). Đang xác thực tài khoản cTrader (2102)...');
-              ws.send(JSON.stringify({
-                clientMsgId: 'acc-auth-1',
-                payloadType: 2102,
-                payload: { ctidTraderAccountId: accountId, accessToken }
-              }));
-            } else if (pt === 2103) {
-              // ProtoOAAccountAuthRes -> Connected Live! Request Trader Balance (2121) & Reconcile Positions (2124)
-              state.executionMode = 'LIVE_CTRADER';
-              updateLiveBadgeState('LIVE: IC Markets cTrader (#' + accountId + ')', true);
-              logApiMessage(`Đăng nhập thành công tài khoản cTrader #${accountId}! Đang đồng bộ Balance & Lệnh...`);
-              showToast(`Đã kết nối cTrader #${accountId}!`);
-
-              ws.send(JSON.stringify({
-                clientMsgId: 'trader-req',
-                payloadType: 2121,
-                payload: { ctidTraderAccountId: accountId }
-              }));
-              ws.send(JSON.stringify({
-                clientMsgId: 'reconcile-req',
-                payloadType: 2124,
-                payload: { ctidTraderAccountId: accountId }
-              }));
-            } else if (pt === 2122 && msg.payload && msg.payload.trader) {
-              // ProtoOATraderRes: balance is in cents
-              const bal = (msg.payload.trader.balance || 0) / 100.0;
-              if (bal > 0) {
-                state.balance = bal;
-                state.equity = bal;
-                renderPositionsTable();
-                computeInterpolatedParameters();
-                logApiMessage(`Đồng bộ số dư thực tế: Balance = $${bal.toFixed(2)}`);
-              }
-            } else if (pt === 2126) {
-              // ProtoOAExecutionEvent
-              logApiMessage('Nhận phản hồi khớp lệnh trực tiếp từ máy chủ cTrader (2126)!');
-              showToast('Sàn IC Markets đã xác nhận khớp lệnh!');
-            } else if (pt === 2142 || pt === 50) {
-              const errDesc = (msg.payload && msg.payload.description) || 'Lỗi xác thực hoặc tham số';
-              logApiMessage(`Lỗi từ cTrader (${pt}): ${errDesc}`, true);
-            }
-          } catch (parseErr) {}
-        };
-
-        ws.onerror = () => {
-          logApiMessage('Lỗi kết nối WebSocket cTrader. Kiểm tra mạng hoặc thông số Token.', true);
-        };
-
-        ws.onclose = () => {
-          if (state.executionMode === 'LIVE_CTRADER') {
-            logApiMessage('Kết nối WebSocket cTrader đã đóng.', true);
-            disconnectLiveBroker(false);
-          }
-        };
-      } catch (err) {
-        logApiMessage('Không thể khởi tạo WebSocket: ' + err.message, true);
-      }
-    }
-
-    // 2B. Connect Live IC Markets MT4/MT5 via MetaApi Cloud REST Bridge
-    async function connectLiveMt4MetaApi() {
-      const regionUrl = document.getElementById('mt4RegionSelect').value;
-      const token = document.getElementById('inpMt4Token').value.trim();
-      const accountId = document.getElementById('inpMt4AccountId').value.trim();
-
-      if (!token || !accountId) {
-        logApiMessage('Vui lòng nhập đủ MetaApi Access Token và MT4 Account ID.', true);
-        showToast('Thiếu Token hoặc Account ID MT4!');
-        return;
-      }
-
-      saveCredentialsLocal({ mt4AccountId: accountId });
-      disconnectLiveBroker(false);
-      logApiMessage(`Đang xác thực tài khoản MT4 (${accountId.slice(0, 8)}...) qua cụm ${regionUrl}...`);
-
-      try {
-        const res = await fetch(`${regionUrl}/users/current/accounts/${accountId}/account-information`, {
-          method: 'GET',
-          headers: { 'auth-token': token, 'Accept': 'application/json' }
-        });
-
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status} - Kiểm tra lại MetaApi Token hoặc Account ID`);
+      // Automatically show/hide & rotate center crease for unfolded 7.6" screen
+      if (state.deviceFoldState === 'UNFOLDED') {
+        crease.style.display = 'block';
+        if (isLandscape) {
+          crease.className = 'crease-v';
+        } else {
+          crease.className = 'crease-h';
         }
-
-        const info = await res.json();
-        state.executionMode = 'LIVE_MT4';
-        state.balance = Number(info.balance || state.balance);
-        state.equity = Number(info.equity || state.balance);
-
-        updateLiveBadgeState(`LIVE: IC Markets MT4 (${info.login || 'Connected'})`, true);
-        logApiMessage(`Đã kết nối MT4 #${info.login || accountId}! Balance: $${state.balance.toFixed(2)}, Equity: $${state.equity.toFixed(2)}`);
-        showToast('Đã kết nối tài khoản IC Markets MT4 thật!');
-
-        renderPositionsTable();
-        computeInterpolatedParameters();
-        resizeAndDrawChart();
-
-        // Poll account info & positions every 3 seconds
-        state.mt4PollTimer = setInterval(async () => {
-          try {
-            const r = await fetch(`${regionUrl}/users/current/accounts/${accountId}/account-information`, {
-              headers: { 'auth-token': token }
-            });
-            if (r.ok) {
-              const d = await r.json();
-              if (typeof d.balance === 'number') state.balance = d.balance;
-              if (typeof d.equity === 'number') state.equity = d.equity;
-              document.getElementById('hudBalanceDisplay').textContent = '$' + state.balance.toLocaleString('en-US', { minimumFractionDigits: 2 });
-              document.getElementById('hudEquityDisplay').textContent = '$' + state.equity.toLocaleString('en-US', { minimumFractionDigits: 2 });
-              computeInterpolatedParameters();
-            }
-          } catch (e) {}
-        }, 3000);
-
-      } catch (err) {
-        logApiMessage('Không thể kết nối MT4 MetaApi: ' + err.message, true);
-        showToast('Lỗi đăng nhập MT4: Kiểm tra Token!');
-      }
-    }
-
-    function disconnectLiveBroker(notify = true) {
-      if (state.ctraderHeartbeatTimer) clearInterval(state.ctraderHeartbeatTimer);
-      if (state.mt4PollTimer) clearInterval(state.mt4PollTimer);
-      if (state.ctraderSocket) {
-        try { state.ctraderSocket.close(); } catch (e) {}
-        state.ctraderSocket = null;
-      }
-      state.executionMode = 'SIM';
-      updateLiveBadgeState('CHẾ ĐỘ: GIẢ LẬP (SIM)', false);
-      if (notify) {
-        logApiMessage('Đã ngắt kết nối tài khoản thật và quay về Chế độ Giả lập (Simulation).');
-        showToast('Đã chuyển về Chế độ Giả lập');
-      }
-    }
-
-    function updateLiveBadgeState(badgeText, isLive) {
-      const badge = document.getElementById('activeBrokerBadge');
-      const dot = document.getElementById('connStatusDot');
-      const statusLabel = document.getElementById('liveConnStateLabel');
-      const btnDisc = document.getElementById('btnDisconnectLive');
-
-      badge.textContent = badgeText;
-      if (isLive) {
-        badge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
-        statusLabel.textContent = '● ĐANG KẾT NỐI TÀI KHOẢN THẬT (' + badgeText + ')';
-        statusLabel.className = 'font-mono text-[11px] px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-        btnDisc.classList.remove('hidden');
       } else {
-        badge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30';
-        dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse';
-        statusLabel.textContent = '● Đang chạy Chế độ Giả lập (Simulation)';
-        statusLabel.className = 'font-mono text-[11px] px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30';
-        btnDisc.classList.add('hidden');
+        crease.style.display = 'none';
       }
+
+      // Hide simulator desktop bar if in Standalone Fullscreen PWA
+      const topBar = document.getElementById('desktopSimToolbar');
+      if (topBar) {
+        if (state.isStandalonePWA) {
+          topBar.style.display = 'none';
+        } else {
+          topBar.style.display = 'flex';
+        }
+      }
+
+      resizeAndDrawChart();
     }
+
+    // Listen to device rotation and viewport resize
+    window.addEventListener('resize', detectRealScreenAndLayout);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(detectRealScreenAndLayout, 200);
+    });
+
+    // Force simulation buttons on desktop
+    document.getElementById('btnForceUnfolded').addEventListener('click', () => {
+      state.deviceFoldState = 'UNFOLDED';
+      detectRealScreenAndLayout();
+    });
+    document.getElementById('btnForceFolded').addEventListener('click', () => {
+      state.deviceFoldState = 'FOLDED';
+      detectRealScreenAndLayout();
+    });
 
     // =========================================================================
     // 3. VOLUME & TP/SL INTERPOLATION ENGINE
@@ -895,15 +655,7 @@
         }
       }
 
-      if (state.volMode === 'AUTO_MATRIX') {
-        state.lotSize = Math.max(0.01, Math.round(targetLots * 100) / 100);
-      } else if (state.volMode.startsWith('RISK_')) {
-        const pct = state.volMode === 'RISK_05' ? 0.005 : (state.volMode === 'RISK_10' ? 0.01 : 0.02);
-        targetRiskUsd = E * pct;
-        const currentSlPips = Math.max(2, Math.abs(state.entryLinePrice - state.slLinePrice) / inst.pipSize);
-        const rawLots = targetRiskUsd / (currentSlPips * inst.pipValuePerLot);
-        state.lotSize = Math.max(0.01, Math.round(rawLots * 100) / 100);
-      }
+      state.lotSize = Math.max(0.01, Math.round(targetLots * 100) / 100);
 
       let slPips = presetSlPips;
       if (state.interpolateSlByVol) {
@@ -917,72 +669,21 @@
       state.slLinePrice = Number((state.entryLinePrice - dir * slPips * inst.pipSize).toFixed(inst.digits));
       state.tpLinePrice = Number((state.entryLinePrice + dir * tpPips * inst.pipSize).toFixed(inst.digits));
 
-      updateHudReadouts();
-    }
-
-    function updateHudReadouts() {
-      const inst = INSTRUMENTS[state.symbol];
-      const slPips = Math.abs(state.entryLinePrice - state.slLinePrice) / inst.pipSize;
-      const tpPips = Math.abs(state.tpLinePrice - state.entryLinePrice) / inst.pipSize;
-      const slUsd = slPips * state.lotSize * inst.pipValuePerLot;
-      const tpUsd = tpPips * state.lotSize * inst.pipValuePerLot;
-
       document.getElementById('hudInterpolatedVol').textContent = state.lotSize.toFixed(2);
-      document.getElementById('inputLotSize').value = state.lotSize.toFixed(2);
-      document.getElementById('hudSlPips').textContent = slPips.toFixed(1);
-      document.getElementById('hudSlUsd').textContent = '-$' + Math.round(slUsd);
-      document.getElementById('hudTpPips').textContent = tpPips.toFixed(1);
-      document.getElementById('hudTpUsd').textContent = '+$' + Math.round(tpUsd);
-
-      const eqK = (state.equity / 1000).toFixed(2);
-      document.getElementById('matrixStatusOverlay').textContent =
-        `● Nội suy: Equity $${eqK}k → ${state.lotSize.toFixed(2)} Lots (SL ${slPips.toFixed(1)}p / TP ${tpPips.toFixed(1)}p)`;
+      document.getElementById('matrixStatusOverlay').textContent = `Nội suy: ${state.lotSize.toFixed(2)} Lots (SL ${slPips.toFixed(1)}p / TP ${tpPips.toFixed(1)}p)`;
     }
 
     // =========================================================================
-    // 4. DEVICE FORM FACTOR & ORIENTATION ENGINE (7.6" & 5.4" x Landscape/Portrait)
+    // 4. CHART RENDERING & CANDLESTICK DRAWING
     // =========================================================================
-    function applyDeviceViewportGeometry() {
-      const container = document.getElementById('duoDeviceContainer');
-      const crease = document.getElementById('hingeCrease');
-      const specBadge = document.getElementById('deviceSpecBadge');
+    const canvas = document.getElementById('tradingCanvas');
+    const ctx = canvas.getContext('2d');
+    let chartBounds = { minPrice: 0, maxPrice: 1, padTop: 56, padBottom: 60, padRight: 72 };
 
-      if (state.deviceMode === 'UNFOLDED') {
-        crease.classList.remove('hidden');
-        if (state.orientation === 'LANDSCAPE') {
-          container.style.maxWidth = '1040px';
-          container.style.height = '680px';
-          crease.className = 'crease-vertical absolute inset-y-0 left-1/2 -translate-x-1/2 w-5 z-10';
-          specBadge.textContent = 'Mở 7.6" • Ngang (2670×1878 px)';
-        } else {
-          container.style.maxWidth = '640px';
-          container.style.height = '820px';
-          crease.className = 'crease-horizontal absolute inset-x-0 top-1/2 -translate-y-1/2 h-5 z-10';
-          specBadge.textContent = 'Mở 7.6" • Dọc (1878×2670 px)';
-        }
-      } else {
-        crease.classList.add('hidden');
-        if (state.orientation === 'LANDSCAPE') {
-          container.style.maxWidth = '720px';
-          container.style.height = '490px';
-          specBadge.textContent = 'Gập 5.4" • Ngang (2034×1398 px)';
-        } else {
-          container.style.maxWidth = '440px';
-          container.style.height = '650px';
-          specBadge.textContent = 'Gập 5.4" • Dọc (1398×2034 px)';
-        }
-      }
-
-      setTimeout(resizeAndDrawChart, 360);
-    }
-
-    // =========================================================================
-    // 5. CANDLESTICK GENERATOR & FULL-BLEED CHART + CROSSHAIR RENDERER
-    // =========================================================================
-    function generateCandlesForSymbol(symbol, count = 82) {
+    function generateCandlesForSymbol(symbol, count = 85) {
       const inst = INSTRUMENTS[symbol];
       const candles = [];
-      let price = inst.basePrice - inst.pipSize * 45;
+      let price = inst.basePrice - inst.pipSize * 40;
       const now = Math.floor(Date.now() / 1000);
       const tfSeconds = { M1: 60, M5: 300, M15: 900, H1: 3600, H4: 14400, D1: 86400 }[state.timeframe] || 900;
 
@@ -993,27 +694,19 @@
         const close = Number((open + delta).toFixed(inst.digits));
         const high = Number((Math.max(open, close) + Math.random() * volatility * 0.65).toFixed(inst.digits));
         const low = Number((Math.min(open, close) - Math.random() * volatility * 0.65).toFixed(inst.digits));
-        const vol = Math.floor(120 + Math.random() * 380);
-        candles.push({ time: now - i * tfSeconds, open, high, low, close, vol });
+        candles.push({ time: now - i * tfSeconds, open, high, low, close, vol: Math.floor(100 + Math.random() * 300) });
         price = close;
       }
-
       state.candles = candles;
-      const lastClose = candles[candles.length - 1].close;
-      INSTRUMENTS[symbol].basePrice = lastClose;
-      state.entryLinePrice = lastClose;
+      state.entryLinePrice = candles[candles.length - 1].close;
       computeInterpolatedParameters();
     }
-
-    const canvas = document.getElementById('tradingCanvas');
-    const ctx = canvas.getContext('2d');
-    let chartBounds = { minPrice: 0, maxPrice: 1, padTop: 48, padBottom: 52, padRight: 76 };
 
     function resizeAndDrawChart() {
       const wrapper = document.getElementById('chartWrapper');
       const rect = wrapper.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.max(280, rect.width) * dpr;
+      canvas.width = Math.max(260, rect.width) * dpr;
       canvas.height = Math.max(200, rect.height) * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       drawChart(rect.width, rect.height);
@@ -1032,23 +725,13 @@
       return chartBounds.maxPrice - ratio * (chartBounds.maxPrice - chartBounds.minPrice);
     }
 
-    function formatCandleTimestamp(unixSec) {
-      const d = new Date(unixSec * 1000);
-      const hh = String(d.getHours()).padStart(2, '0');
-      const mm = String(d.getMinutes()).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mo = String(d.getMonth() + 1).padStart(2, '0');
-      return `${dd}/${mo} ${hh}:${mm}`;
-    }
-
     function drawChart(w, h) {
       ctx.clearRect(0, 0, w, h);
       const inst = INSTRUMENTS[state.symbol];
       const candles = state.candles;
       if (!candles.length) return;
 
-      let minP = Infinity;
-      let maxP = -Infinity;
+      let minP = Infinity, maxP = -Infinity;
       candles.forEach(c => {
         if (c.low < minP) minP = c.low;
         if (c.high > maxP) maxP = c.high;
@@ -1063,14 +746,14 @@
 
       const plotW = w - chartBounds.padRight;
 
+      // Price Grid
       ctx.strokeStyle = 'rgba(148, 163, 184, 0.06)';
       ctx.lineWidth = 1;
-      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.font = '10px ui-monospace, monospace';
       ctx.fillStyle = '#64748B';
 
-      const steps = 6;
-      for (let i = 0; i <= steps; i++) {
-        const p = chartBounds.minPrice + (i / steps) * (chartBounds.maxPrice - chartBounds.minPrice);
+      for (let i = 0; i <= 6; i++) {
+        const p = chartBounds.minPrice + (i / 6) * (chartBounds.maxPrice - chartBounds.minPrice);
         const y = priceToY(p, h);
         ctx.beginPath();
         ctx.moveTo(0, y);
@@ -1079,6 +762,7 @@
         ctx.fillText(p.toFixed(inst.digits), plotW + 6, y + 3);
       }
 
+      // Candlesticks
       const stepX = plotW / candles.length;
       const candleW = Math.max(3, Math.min(13, stepX * 0.70));
 
@@ -1096,86 +780,24 @@
 
         const yOpen = priceToY(c.open, h);
         const yClose = priceToY(c.close, h);
-        const topY = Math.min(yOpen, yClose);
-        const bodyH = Math.max(2, Math.abs(yClose - yOpen));
         ctx.fillStyle = color;
-        ctx.fillRect(x - candleW / 2, topY, candleW, bodyH);
+        ctx.fillRect(x - candleW / 2, Math.min(yOpen, yClose), candleW, Math.max(2, Math.abs(yClose - yOpen)));
       });
 
-      if (state.showEma) {
-        const ema20 = [], ema50 = [];
-        const k20 = 2 / 21, k50 = 2 / 51;
-        candles.forEach((c, idx) => {
-          if (idx === 0) { ema20.push(c.close); ema50.push(c.close); }
-          else {
-            ema20.push(c.close * k20 + ema20[idx - 1] * (1 - k20));
-            ema50.push(c.close * k50 + ema50[idx - 1] * (1 - k50));
-          }
-        });
-        const drawEma = (arr, stroke) => {
-          ctx.strokeStyle = stroke;
-          ctx.lineWidth = 1.3;
-          ctx.beginPath();
-          arr.forEach((val, idx) => {
-            const x = idx * stepX + stepX * 0.5;
-            const y = priceToY(val, h);
-            if (idx === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-          });
-          ctx.stroke();
-        };
-        drawEma(ema20, 'rgba(56, 189, 248, 0.65)');
-        drawEma(ema50, 'rgba(245, 158, 11, 0.65)');
-      }
-
-      state.positions.filter(p => p.symbol === state.symbol).forEach(pos => {
-        const yPos = priceToY(pos.openPrice, h);
-        ctx.save();
-        ctx.strokeStyle = pos.side === 'BUY' ? state.bullColor : state.bearColor;
-        ctx.lineWidth = 1;
-        ctx.setLineDash([2, 2]);
-        ctx.beginPath();
-        ctx.moveTo(0, yPos);
-        ctx.lineTo(plotW, yPos);
-        ctx.stroke();
-        ctx.restore();
-      });
-
+      // Draggable Lines
       if (state.showOverlayLines) {
-        const slPips = Math.abs(state.entryLinePrice - state.slLinePrice) / inst.pipSize;
-        const tpPips = Math.abs(state.tpLinePrice - state.entryLinePrice) / inst.pipSize;
-        const slUsd = Math.round(slPips * state.lotSize * inst.pipValuePerLot);
-        const tpUsd = Math.round(tpPips * state.lotSize * inst.pipValuePerLot);
-        const rr = (tpPips / Math.max(0.1, slPips)).toFixed(1);
-
-        drawInteractiveLevelLine(
-          w, h, plotW,
-          state.tpLinePrice,
-          state.bullColor,
-          `TP +${rr}R (+$${tpUsd})`,
-          '#041019'
-        );
-        drawInteractiveLevelLine(
-          w, h, plotW,
-          state.entryLinePrice,
-          '#64748B',
-          `Entry ${state.entryLinePrice.toFixed(inst.digits)}`,
-          '#FFFFFF'
-        );
-        drawInteractiveLevelLine(
-          w, h, plotW,
-          state.slLinePrice,
-          state.bearColor,
-          `SL -1R (-$${slUsd})`,
-          '#FFFFFF'
-        );
+        drawInteractiveLevelLine(w, h, plotW, state.tpLinePrice, state.bullColor, 'TP');
+        drawInteractiveLevelLine(w, h, plotW, state.entryLinePrice, '#64748B', 'Entry');
+        drawInteractiveLevelLine(w, h, plotW, state.slLinePrice, state.bearColor, 'SL');
       }
 
+      // Crosshair
       if (state.crosshairEnabled && state.crosshairPos) {
         drawCrosshairOverlay(w, h, plotW, stepX);
       }
     }
 
-    function drawInteractiveLevelLine(w, h, plotW, price, colorHex, labelText, textColor) {
+    function drawInteractiveLevelLine(w, h, plotW, price, colorHex, tag) {
       const inst = INSTRUMENTS[state.symbol];
       const y = priceToY(price, h);
       ctx.save();
@@ -1188,24 +810,10 @@
       ctx.stroke();
 
       ctx.setLineDash([]);
-      ctx.font = '600 10px "JetBrains Mono", monospace';
-      const textW = ctx.measureText(labelText).width;
-      const pillW = textW + 12;
-      const pillH = 18;
-      const pillX = Math.max(8, plotW - pillW - 6);
-      const pillY = y - pillH / 2;
-
-      ctx.fillStyle = colorHex;
-      ctx.beginPath();
-      ctx.roundRect(pillX, pillY, pillW, pillH, 4);
-      ctx.fill();
-
-      ctx.fillStyle = textColor;
-      ctx.fillText(labelText, pillX + 6, y + 3.5);
-
       ctx.fillStyle = colorHex;
       ctx.fillRect(plotW + 2, y - 8, chartBounds.padRight - 4, 16);
-      ctx.fillStyle = textColor;
+      ctx.fillStyle = colorHex === state.bullColor ? '#030D14' : '#FFFFFF';
+      ctx.font = '700 10px ui-monospace, monospace';
       ctx.fillText(price.toFixed(inst.digits), plotW + 5, y + 3.5);
       ctx.restore();
     }
@@ -1219,8 +827,6 @@
       const y = Math.max(chartBounds.padTop, Math.min(h - chartBounds.padBottom, pos.y));
       const candleIdx = Math.min(state.candles.length - 1, Math.max(0, Math.floor(x / stepX)));
       const snappedX = candleIdx * stepX + stepX * 0.5;
-      const candle = state.candles[candleIdx];
-      const priceAtY = yToPrice(y, h);
 
       ctx.save();
       ctx.strokeStyle = 'rgba(226, 232, 240, 0.55)';
@@ -1234,578 +840,108 @@
       ctx.lineTo(plotW, y);
       ctx.stroke();
 
-      ctx.setLineDash([]);
       ctx.fillStyle = '#38BDF8';
-      ctx.beginPath();
-      ctx.arc(snappedX, y, 3, 0, Math.PI * 2);
-      ctx.fill();
-
-      const priceText = priceAtY.toFixed(inst.digits);
-      ctx.font = 'bold 10px "JetBrains Mono", monospace';
-      ctx.fillStyle = '#1E293B';
-      ctx.fillRect(plotW + 1, y - 9, chartBounds.padRight - 2, 18);
-      ctx.strokeStyle = '#38BDF8';
-      ctx.strokeRect(plotW + 1, y - 9, chartBounds.padRight - 2, 18);
-      ctx.fillStyle = '#38BDF8';
-      ctx.fillText(priceText, plotW + 5, y + 3.5);
-
-      if (candle) {
-        const timeStr = formatCandleTimestamp(candle.time);
-        const tw = ctx.measureText(timeStr).width + 12;
-        const tx = Math.max(4, Math.min(plotW - tw - 4, snappedX - tw / 2));
-        const ty = h - chartBounds.padBottom + 2;
-        ctx.fillStyle = '#1E293B';
-        ctx.beginPath();
-        ctx.roundRect(tx, ty, tw, 18, 4);
-        ctx.fill();
-        ctx.strokeStyle = '#38BDF8';
-        ctx.stroke();
-        ctx.fillStyle = '#E2E8F0';
-        ctx.fillText(timeStr, tx + 6, ty + 12.5);
-      }
-
-      if (state.rulerAnchor) {
-        const ax = state.rulerAnchor.x;
-        const ay = state.rulerAnchor.y;
-        const anchorPrice = state.rulerAnchor.price;
-        const diffPrice = priceAtY - anchorPrice;
-        const diffPips = diffPrice / inst.pipSize;
-        const diffUsd = diffPips * state.lotSize * inst.pipValuePerLot;
-        const diffBars = candleIdx - state.rulerAnchor.candleIdx;
-
-        ctx.fillStyle = diffPips >= 0 ? 'rgba(56, 189, 248, 0.14)' : 'rgba(153, 27, 27, 0.22)';
-        ctx.fillRect(Math.min(ax, snappedX), Math.min(ay, y), Math.abs(snappedX - ax), Math.abs(y - ay));
-
-        ctx.strokeStyle = '#38BDF8';
-        ctx.lineWidth = 1.4;
-        ctx.beginPath();
-        ctx.moveTo(ax, ay);
-        ctx.lineTo(snappedX, y);
-        ctx.stroke();
-
-        const rulerLabel = `${diffPips >= 0 ? '+' : ''}${diffPips.toFixed(1)} pips (${diffUsd >= 0 ? '+$' : '-$'}${Math.abs(Math.round(diffUsd))}) • ${Math.abs(diffBars)} nến`;
-        const rw = ctx.measureText(rulerLabel).width + 14;
-        const rx = Math.max(8, Math.min(plotW - rw - 8, (ax + snappedX) / 2 - rw / 2));
-        const ry = Math.max(chartBounds.padTop + 10, Math.min(h - chartBounds.padBottom - 26, (ay + y) / 2 - 12));
-
-        ctx.fillStyle = '#0F172A';
-        ctx.beginPath();
-        ctx.roundRect(rx, ry, rw, 22, 6);
-        ctx.fill();
-        ctx.strokeStyle = '#38BDF8';
-        ctx.stroke();
-        ctx.fillStyle = '#38BDF8';
-        ctx.fillText(rulerLabel, rx + 7, ry + 14.5);
-      }
-
+      ctx.fillRect(plotW + 2, y - 8, chartBounds.padRight - 4, 16);
+      ctx.fillStyle = '#030D14';
+      ctx.font = '700 10px ui-monospace, monospace';
+      ctx.fillText(yToPrice(y, h).toFixed(inst.digits), plotW + 5, y + 3.5);
       ctx.restore();
     }
 
-    // =========================================================================
-    // 6. POINTER INTERACTION: TP/SL DRAG + CROSSHAIR & PIP RULER
-    // =========================================================================
-    function getPointerCoords(evt) {
+    // Pointer events for Crosshair & Dragging
+    function getPointer(e) {
       const rect = canvas.getBoundingClientRect();
-      const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
-      const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-      return { x: clientX - rect.left, y: clientY - rect.top, w: rect.width, h: rect.height };
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      const cy = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: cx - rect.left, y: cy - rect.top, h: rect.height };
     }
 
-    function updateCrosshairBarReadout(coords) {
-      const inst = INSTRUMENTS[state.symbol];
-      const plotW = coords.w - chartBounds.padRight;
-      const stepX = plotW / Math.max(1, state.candles.length);
-      const candleIdx = Math.min(state.candles.length - 1, Math.max(0, Math.floor(coords.x / stepX)));
-      const c = state.candles[candleIdx];
-      const bar = document.getElementById('crosshairInspectBar');
-
-      if (!state.crosshairEnabled || !c) {
-        bar.classList.add('hidden');
-        return;
-      }
-      bar.classList.remove('hidden');
-      document.getElementById('chSymbolTf').textContent = `${state.symbol} • ${state.timeframe}`;
-      document.getElementById('ohlcReadout').textContent =
-        `O:${c.open.toFixed(inst.digits)} H:${c.high.toFixed(inst.digits)} L:${c.low.toFixed(inst.digits)} C:${c.close.toFixed(inst.digits)}`;
-
-      const changePips = ((c.close - c.open) / inst.pipSize).toFixed(1);
-      document.getElementById('chDeltaInfo').textContent = `${changePips >= 0 ? '+' : ''}${changePips}p`;
-    }
-
-    function handlePointerDown(evt) {
-      const coords = getPointerCoords(evt);
-
-      if (state.showOverlayLines) {
-        const yTp = priceToY(state.tpLinePrice, coords.h);
-        const ySl = priceToY(state.slLinePrice, coords.h);
-        const yEntry = priceToY(state.entryLinePrice, coords.h);
-        const threshold = 16;
-
-        if (Math.abs(coords.y - yTp) < threshold) {
-          state.draggingLine = 'TP';
-          return;
-        } else if (Math.abs(coords.y - ySl) < threshold) {
-          state.draggingLine = 'SL';
-          return;
-        } else if (Math.abs(coords.y - yEntry) < threshold && state.orderType === 'LIMIT') {
-          state.draggingLine = 'ENTRY';
-          return;
-        }
-      }
-
+    canvas.addEventListener('mousedown', (e) => {
+      const p = getPointer(e);
       if (state.crosshairEnabled) {
-        const plotW = coords.w - chartBounds.padRight;
-        const stepX = plotW / Math.max(1, state.candles.length);
-        const candleIdx = Math.min(state.candles.length - 1, Math.max(0, Math.floor(coords.x / stepX)));
-        const snappedX = candleIdx * stepX + stepX * 0.5;
-        const price = yToPrice(coords.y, coords.h);
-
-        state.crosshairPos = { x: coords.x, y: coords.y };
-        state.rulerAnchor = { x: snappedX, y: coords.y, candleIdx, price };
-        updateCrosshairBarReadout(coords);
+        state.crosshairPos = { x: p.x, y: p.y };
         resizeAndDrawChart();
       }
-    }
+    });
 
-    function handlePointerMove(evt) {
-      const coords = getPointerCoords(evt);
-      const inst = INSTRUMENTS[state.symbol];
-
-      if (state.draggingLine) {
-        evt.preventDefault();
-        const newPrice = Number(yToPrice(coords.y, coords.h).toFixed(inst.digits));
-
-        if (state.draggingLine === 'TP') {
-          state.tpLinePrice = newPrice;
-        } else if (state.draggingLine === 'SL') {
-          state.slLinePrice = newPrice;
-          if (state.volMode.startsWith('RISK_')) {
-            const pct = state.volMode === 'RISK_05' ? 0.005 : (state.volMode === 'RISK_10' ? 0.01 : 0.02);
-            const riskUsd = state.equity * pct;
-            const slPips = Math.max(2, Math.abs(state.entryLinePrice - state.slLinePrice) / inst.pipSize);
-            state.lotSize = Math.max(0.01, Math.round((riskUsd / (slPips * inst.pipValuePerLot)) * 100) / 100);
-          }
-        } else if (state.draggingLine === 'ENTRY') {
-          const diff = newPrice - state.entryLinePrice;
-          state.entryLinePrice = newPrice;
-          state.slLinePrice = Number((state.slLinePrice + diff).toFixed(inst.digits));
-          state.tpLinePrice = Number((state.tpLinePrice + diff).toFixed(inst.digits));
-        }
-
-        updateHudReadouts();
+    window.addEventListener('mousemove', (e) => {
+      if (state.crosshairEnabled && !state.draggingLine) {
+        const p = getPointer(e);
+        state.crosshairPos = { x: p.x, y: p.y };
         resizeAndDrawChart();
+      }
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+      const p = getPointer(e);
+      state.crosshairPos = { x: p.x, y: p.y };
+      resizeAndDrawChart();
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (state.crosshairEnabled && e.touches) {
+        const p = getPointer(e);
+        state.crosshairPos = { x: p.x, y: p.y };
+        resizeAndDrawChart();
+      }
+    }, { passive: true });
+
+    // =========================================================================
+    // 5. LIVE BROKER EXECUTION & SOCKET SETUP
+    // =========================================================================
+    function connectLiveCTrader() {
+      const wsUrl = document.getElementById('ctraderEnvSelect').value;
+      const clientId = document.getElementById('inpCtraderClientId').value.trim();
+      const clientSecret = document.getElementById('inpCtraderSecret').value.trim();
+      const accessToken = document.getElementById('inpCtraderToken').value.trim();
+      const accountId = parseInt(document.getElementById('inpCtraderAccountId').value.trim(), 10);
+
+      if (!clientId || !clientSecret || !accessToken || !accountId) {
+        logApiMessage('Vui lòng nhập đủ Client ID, Secret, Access Token và Account ID.', true);
+        showToast('Thiếu thông số cTrader!');
         return;
       }
 
-      if (state.crosshairEnabled && coords.x >= 0 && coords.x <= coords.w && coords.y >= 0 && coords.y <= coords.h) {
-        if (evt.touches) evt.preventDefault();
-        state.crosshairPos = { x: coords.x, y: coords.y };
-        updateCrosshairBarReadout(coords);
-        resizeAndDrawChart();
-      }
-    }
+      try {
+        const ws = new WebSocket(wsUrl);
+        state.ctraderSocket = ws;
 
-    function handlePointerUp() {
-      state.draggingLine = null;
-      state.rulerAnchor = null;
-      resizeAndDrawChart();
-    }
+        ws.onopen = () => {
+          logApiMessage('Đã mở WebSocket tới cTrader :5036. Gửi ProtoOAApplicationAuthReq...');
+          ws.send(JSON.stringify({ clientMsgId: 'auth', payloadType: 2100, payload: { clientId, clientSecret } }));
+        };
 
-    canvas.addEventListener('mousedown', handlePointerDown);
-    window.addEventListener('mousemove', handlePointerMove);
-    window.addEventListener('mouseup', handlePointerUp);
-    canvas.addEventListener('mouseleave', () => {
-      if (!state.rulerAnchor) {
-        state.crosshairPos = null;
-        document.getElementById('crosshairInspectBar').classList.add('hidden');
-        resizeAndDrawChart();
-      }
-    });
-    canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
-    window.addEventListener('touchmove', handlePointerMove, { passive: false });
-    window.addEventListener('touchend', handlePointerUp);
-
-    // =========================================================================
-    // 7. MATRIX TABLE & ACTIVE POSITIONS RENDERING
-    // =========================================================================
-    function renderMatrixTable() {
-      const tbody = document.getElementById('matrixTableBody');
-      tbody.innerHTML = '';
-
-      state.capitalMatrix.sort((a, b) => a.equity - b.equity).forEach((row, idx) => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-900/50 transition';
-        tr.innerHTML = `
-          <td class="py-2 px-3">
-            <input type="number" data-idx="${idx}" data-field="equity" value="${row.equity}" class="matrix-input w-24 bg-slate-900 text-white px-2 py-1 rounded border border-slate-700" />
-          </td>
-          <td class="py-2 px-3">
-            <input type="number" step="0.05" data-idx="${idx}" data-field="lots" value="${row.lots}" class="matrix-input w-20 bg-slate-900 text-sky-400 font-bold px-2 py-1 rounded border border-slate-700" />
-          </td>
-          <td class="py-2 px-3">
-            <input type="number" step="25" data-idx="${idx}" data-field="maxRiskUsd" value="${row.maxRiskUsd}" class="matrix-input w-20 bg-slate-900 text-rose-400 px-2 py-1 rounded border border-slate-700" />
-          </td>
-          <td class="py-2 px-3">
-            <input type="number" data-idx="${idx}" data-field="slPips" value="${row.slPips}" class="matrix-input w-16 bg-slate-900 text-slate-200 px-2 py-1 rounded border border-slate-700" />
-          </td>
-          <td class="py-2 px-3">
-            <input type="number" data-idx="${idx}" data-field="tpPips" value="${row.tpPips}" class="matrix-input w-16 bg-slate-900 text-slate-200 px-2 py-1 rounded border border-slate-700" />
-          </td>
-          <td class="py-2 px-3 text-right">
-            <button data-del="${idx}" class="btn-del-tier text-rose-400 hover:text-rose-300 px-2 py-0.5 rounded bg-rose-500/10">Xóa</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      tbody.querySelectorAll('.matrix-input').forEach(inp => {
-        inp.addEventListener('change', (e) => {
-          const i = Number(e.target.dataset.idx);
-          const field = e.target.dataset.field;
-          const val = parseFloat(e.target.value);
-          if (!isNaN(val) && val > 0) {
-            state.capitalMatrix[i][field] = val;
-            computeInterpolatedParameters();
-            resizeAndDrawChart();
+        ws.onmessage = (evt) => {
+          const msg = JSON.parse(evt.data);
+          if (msg.payloadType === 2101) {
+            ws.send(JSON.stringify({ clientMsgId: 'acc', payloadType: 2102, payload: { ctidTraderAccountId: accountId, accessToken } }));
+          } else if (msg.payloadType === 2103) {
+            state.executionMode = 'LIVE_CTRADER';
+            document.getElementById('activeBrokerBadge').textContent = 'LIVE: cTrader #' + accountId;
+            document.getElementById('activeBrokerBadge').style.background = 'rgba(16,185,129,0.2)';
+            document.getElementById('activeBrokerBadge').style.color = '#6EE7B7';
+            logApiMessage(`Đã đăng nhập cTrader LIVE #${accountId}!`);
+            showToast('Kết nối cTrader thành công!');
           }
-        });
-      });
+        };
 
-      tbody.querySelectorAll('.btn-del-tier').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          if (state.capitalMatrix.length <= 1) return;
-          const i = Number(e.currentTarget.dataset.del);
-          state.capitalMatrix.splice(i, 1);
-          renderMatrixTable();
-          computeInterpolatedParameters();
-          resizeAndDrawChart();
-        });
-      });
-    }
-
-    function renderPositionsTable() {
-      const tbody = document.getElementById('positionsTableBody');
-      tbody.innerHTML = '';
-      let totalPnl = 0;
-
-      state.positions.forEach((pos, idx) => {
-        const inst = INSTRUMENTS[pos.symbol];
-        const currentPrice = inst.basePrice;
-        const pipDiff = (pos.side === 'BUY' ? (currentPrice - pos.openPrice) : (pos.openPrice - currentPrice)) / inst.pipSize;
-        const pnlUsd = pipDiff * pos.lots * inst.pipValuePerLot;
-        totalPnl += pnlUsd;
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="py-2 px-3 font-bold ${pos.side === 'BUY' ? 'text-bull-dynamic' : 'text-bear-dynamic'}">
-            ${pos.symbol} ${pos.side}
-          </td>
-          <td class="py-2 px-3 text-white">${pos.lots.toFixed(2)}</td>
-          <td class="py-2 px-3 text-slate-300">${pos.openPrice.toFixed(inst.digits)}</td>
-          <td class="py-2 px-3 text-slate-400">
-            SL: ${pos.slPrice.toFixed(inst.digits)} / TP: ${pos.tpPrice.toFixed(inst.digits)}
-          </td>
-          <td class="py-2 px-3 font-bold ${pnlUsd >= 0 ? 'text-bull-dynamic' : 'text-rose-400'}">
-            ${pnlUsd >= 0 ? '+' : ''}$${pnlUsd.toFixed(2)} (${pipDiff.toFixed(1)}p)
-          </td>
-          <td class="py-2 px-3 text-right space-x-1">
-            <button data-be="${idx}" class="btn-pos-be px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 hover:bg-sky-500/30">Dời BE</button>
-            <button data-close="${idx}" class="btn-pos-close px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 hover:bg-rose-500/30">Đóng</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      if (state.positions.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-500">Chưa có vị thế đang mở. Bấm BUY hoặc SELL trên màn hình chính để vào lệnh.</td></tr>`;
+        ws.onerror = () => logApiMessage('Lỗi kết nối WebSocket cTrader.', true);
+      } catch (err) {
+        logApiMessage('Lỗi: ' + err.message, true);
       }
-
-      if (state.executionMode === 'SIM') {
-        state.equity = Number((state.balance + totalPnl).toFixed(2));
-      }
-      document.getElementById('hudBalanceDisplay').textContent = '$' + state.balance.toLocaleString('en-US', { minimumFractionDigits: 2 });
-      document.getElementById('hudEquityDisplay').textContent = '$' + state.equity.toLocaleString('en-US', { minimumFractionDigits: 2 });
-
-      document.getElementById('openCountBadge').textContent = state.positions.length;
-      document.getElementById('drawerPosCount').textContent = state.positions.length;
-
-      const pnlEl = document.getElementById('hudOpenPnl');
-      pnlEl.textContent = (totalPnl >= 0 ? '+$' : '-$') + Math.abs(totalPnl).toFixed(2);
-      pnlEl.className = 'font-bold ml-0.5 ' + (totalPnl >= 0 ? 'text-bull-dynamic' : 'text-rose-400');
-
-      tbody.querySelectorAll('.btn-pos-close').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const idx = Number(e.currentTarget.dataset.close);
-          state.positions.splice(idx, 1);
-          renderPositionsTable();
-          computeInterpolatedParameters();
-          resizeAndDrawChart();
-          showToast('Đã đóng vị thế thành công!');
-        });
-      });
-
-      tbody.querySelectorAll('.btn-pos-be').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const idx = Number(e.currentTarget.dataset.be);
-          state.positions[idx].slPrice = state.positions[idx].openPrice;
-          renderPositionsTable();
-          resizeAndDrawChart();
-          showToast('Đã dời Stop Loss về Hòa vốn (Breakeven)!');
-        });
-      });
     }
 
-    function showToast(msg) {
-      const toast = document.getElementById('tradeToast');
-      toast.textContent = msg;
-      toast.classList.remove('hidden');
-      clearTimeout(showToast._timer);
-      showToast._timer = setTimeout(() => toast.classList.add('hidden'), 2500);
-    }
-
-    // =========================================================================
-    // 8. UI CONTROLS & REAL / SIM ORDER EXECUTION DISPATCHER
-    // =========================================================================
-    document.getElementById('btnModeUnfolded').addEventListener('click', () => {
-      state.deviceMode = 'UNFOLDED';
-      document.getElementById('btnModeUnfolded').className = 'px-2.5 py-1 rounded-md text-xs font-medium transition bg-sky-500 text-slate-950 font-semibold';
-      document.getElementById('btnModeFolded').className = 'px-2.5 py-1 rounded-md text-xs font-medium transition text-slate-400 hover:text-white';
-      applyDeviceViewportGeometry();
-    });
-
-    document.getElementById('btnModeFolded').addEventListener('click', () => {
-      state.deviceMode = 'FOLDED';
-      document.getElementById('btnModeFolded').className = 'px-2.5 py-1 rounded-md text-xs font-medium transition bg-sky-500 text-slate-950 font-semibold';
-      document.getElementById('btnModeUnfolded').className = 'px-2.5 py-1 rounded-md text-xs font-medium transition text-slate-400 hover:text-white';
-      applyDeviceViewportGeometry();
-    });
-
-    document.getElementById('btnOrientLandscape').addEventListener('click', () => {
-      state.orientation = 'LANDSCAPE';
-      document.getElementById('btnOrientLandscape').className = 'px-2.5 py-1 rounded-md text-xs font-medium transition bg-sky-500/25 text-sky-300 border border-sky-500/40';
-      document.getElementById('btnOrientPortrait').className = 'px-2.5 py-1 rounded-md text-xs font-medium transition text-slate-400 hover:text-white';
-      applyDeviceViewportGeometry();
-    });
-
-    document.getElementById('btnOrientPortrait').addEventListener('click', () => {
-      state.orientation = 'PORTRAIT';
-      document.getElementById('btnOrientPortrait').className = 'px-2.5 py-1 rounded-md text-xs font-medium transition bg-sky-500/25 text-sky-300 border border-sky-500/40';
-      document.getElementById('btnOrientLandscape').className = 'px-2.5 py-1 rounded-md text-xs font-medium transition text-slate-400 hover:text-white';
-      applyDeviceViewportGeometry();
-    });
-
-    // Quick Sign-In Button on Header opens Drawer Tab 4
+    document.getElementById('btnConnectCtraderLive').addEventListener('click', connectLiveCTrader);
     document.getElementById('btnQuickSignIn').addEventListener('click', () => {
-      const drawer = document.getElementById('bottomSheetDrawer');
-      drawer.classList.remove('translate-y-full');
+      document.getElementById('bottomSheetDrawer').style.transform = 'translateY(0)';
       document.getElementById('btnTabApi').click();
     });
 
-    document.getElementById('btnConnectCtraderLive').addEventListener('click', connectLiveCTrader);
-    document.getElementById('btnConnectMt4Live').addEventListener('click', connectLiveMt4MetaApi);
-    document.getElementById('btnDisconnectLive').addEventListener('click', () => disconnectLiveBroker(true));
-    document.getElementById('btnClearApiLog').addEventListener('click', () => {
-      document.getElementById('apiConsoleLog').innerHTML = '';
-    });
-
-    // Crosshair Toggle Button
-    document.getElementById('btnCrosshairTool').addEventListener('click', (e) => {
-      state.crosshairEnabled = !state.crosshairEnabled;
-      if (state.crosshairEnabled) {
-        e.currentTarget.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-semibold border transition bg-sky-500/25 text-sky-300 border-sky-500/40 flex items-center gap-1';
-        showToast('Đã bật Crosshair: Rê chuột hoặc giữ-kéo trên chart để đo Pip & Tiền');
-      } else {
-        e.currentTarget.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-semibold border transition bg-slate-900 text-slate-400 border-slate-800 flex items-center gap-1';
-        state.crosshairPos = null;
-        state.rulerAnchor = null;
-        document.getElementById('crosshairInspectBar').classList.add('hidden');
-      }
-      resizeAndDrawChart();
-    });
-
-    // Custom Candle & Button Color Pickers
-    function applyCustomColors(bullHex, bearHex) {
-      state.bullColor = bullHex;
-      state.bearColor = bearHex;
-      document.documentElement.style.setProperty('--bull-color', bullHex);
-      document.documentElement.style.setProperty('--bear-color', bearHex);
-      document.getElementById('inputBullColor').value = bullHex;
-      document.getElementById('inputBearColor').value = bearHex;
-      document.getElementById('labelBullHex').textContent = bullHex.toUpperCase();
-      document.getElementById('labelBearHex').textContent = bearHex.toUpperCase();
-      resizeAndDrawChart();
-    }
-
-    document.getElementById('inputBullColor').addEventListener('input', (e) => {
-      applyCustomColors(e.target.value, state.bearColor);
-    });
-
-    document.getElementById('inputBearColor').addEventListener('input', (e) => {
-      applyCustomColors(state.bullColor, e.target.value);
-    });
-
-    document.getElementById('btnResetColors').addEventListener('click', () => {
-      applyCustomColors('#38BDF8', '#991B1B');
-      showToast('Đã đặt lại màu: Xanh Blue nhạt (#38BDF8) & Đỏ sẫm (#991B1B)');
-    });
-
-    document.getElementById('chkShowEma').addEventListener('change', (e) => {
-      state.showEma = e.target.checked;
-      resizeAndDrawChart();
-    });
-
-    // API Route Selector inside Tab 4
-    document.getElementById('btnApiCtrader').addEventListener('click', () => {
-      state.apiRoute = 'CTRADER';
-      document.getElementById('btnApiCtrader').className = 'px-2.5 py-1 rounded-md text-xs font-mono transition bg-sky-500 text-slate-950 font-bold';
-      document.getElementById('btnApiMt4').className = 'px-2.5 py-1 rounded-md text-xs font-mono transition bg-slate-800 text-slate-300 hover:text-white';
-      showToast('Đã chọn giao thức cTrader Open API');
-    });
-
-    document.getElementById('btnApiMt4').addEventListener('click', () => {
-      state.apiRoute = 'MT4';
-      document.getElementById('btnApiMt4').className = 'px-2.5 py-1 rounded-md text-xs font-mono transition bg-amber-500 text-slate-950 font-bold';
-      document.getElementById('btnApiCtrader').className = 'px-2.5 py-1 rounded-md text-xs font-mono transition bg-slate-800 text-slate-300 hover:text-white';
-      showToast('Đã chọn giao thức MT4 MetaApi Cloud');
-    });
-
-    document.getElementById('symbolSelect').addEventListener('change', (e) => {
-      state.symbol = e.target.value;
+    // Orders Execution
+    function executeOrder(side) {
       const inst = INSTRUMENTS[state.symbol];
-      document.getElementById('livePriceDisplay').textContent = inst.basePrice.toFixed(inst.digits);
-      document.getElementById('liveSpreadBadge').textContent = `Spread: ${inst.spreadPips}p`;
-      generateCandlesForSymbol(state.symbol);
-      resizeAndDrawChart();
-    });
-
-    document.querySelectorAll('.tf-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.tf-btn').forEach(b => {
-          b.className = 'tf-btn px-2 py-0.5 rounded text-[11px] font-mono text-slate-400 hover:text-white transition';
-        });
-        e.currentTarget.className = 'tf-btn px-2 py-0.5 rounded text-[11px] font-mono bg-sky-500 text-slate-950 font-bold transition';
-        state.timeframe = e.currentTarget.dataset.tf;
-        generateCandlesForSymbol(state.symbol);
-        resizeAndDrawChart();
-      });
-    });
-
-    document.getElementById('btnToggleLines').addEventListener('click', (e) => {
-      state.showOverlayLines = !state.showOverlayLines;
-      e.currentTarget.textContent = `Đường TP/SL: ${state.showOverlayLines ? 'BẬT' : 'TẮT'}`;
-      resizeAndDrawChart();
-    });
-
-    function setVolModeButtonActive(activeId, mode) {
-      state.volMode = mode;
-      ['btnVolModeAuto', 'btnVolModeRisk05', 'btnVolModeRisk10', 'btnVolModeRisk20'].forEach(id => {
-        const el = document.getElementById(id);
-        if (id === activeId) {
-          el.className = 'px-2 py-0.5 rounded bg-sky-500 text-slate-950 font-semibold';
-        } else {
-          el.className = 'px-2 py-0.5 rounded text-slate-400 hover:text-white font-mono';
-        }
-      });
-      computeInterpolatedParameters();
-      resizeAndDrawChart();
-    }
-
-    document.getElementById('btnVolModeAuto').addEventListener('click', () => setVolModeButtonActive('btnVolModeAuto', 'AUTO_MATRIX'));
-    document.getElementById('btnVolModeRisk05').addEventListener('click', () => setVolModeButtonActive('btnVolModeRisk05', 'RISK_05'));
-    document.getElementById('btnVolModeRisk10').addEventListener('click', () => setVolModeButtonActive('btnVolModeRisk10', 'RISK_10'));
-    document.getElementById('btnVolModeRisk20').addEventListener('click', () => setVolModeButtonActive('btnVolModeRisk20', 'RISK_20'));
-
-    document.getElementById('btnLotMinus').addEventListener('click', () => {
-      state.volMode = 'MANUAL';
-      state.lotSize = Math.max(0.01, Number((state.lotSize - 0.05).toFixed(2)));
-      computeInterpolatedParameters();
-      resizeAndDrawChart();
-    });
-
-    document.getElementById('btnLotPlus').addEventListener('click', () => {
-      state.volMode = 'MANUAL';
-      state.lotSize = Number((state.lotSize + 0.05).toFixed(2));
-      computeInterpolatedParameters();
-      resizeAndDrawChart();
-    });
-
-    document.getElementById('inputLotSize').addEventListener('change', (e) => {
-      const val = parseFloat(e.target.value);
-      if (!isNaN(val) && val >= 0.01) {
-        state.volMode = 'MANUAL';
-        state.lotSize = Number(val.toFixed(2));
-        computeInterpolatedParameters();
-        resizeAndDrawChart();
-      }
-    });
-
-    document.getElementById('orderTypeSelect').addEventListener('change', (e) => {
-      state.orderType = e.target.value;
-      resizeAndDrawChart();
-    });
-
-    // Execute BUY / SELL / CLOSE ALL (Supports both LIVE Broker Dispatch & Simulation)
-    async function executeOrder(side) {
-      const inst = INSTRUMENTS[state.symbol];
-      const entry = state.orderType === 'MARKET' ? inst.basePrice : state.entryLinePrice;
-      const distSl = Math.abs(state.entryLinePrice - state.slLinePrice);
-      const distTp = Math.abs(state.tpLinePrice - state.entryLinePrice);
-
-      const slPrice = side === 'BUY' ? Number((entry - distSl).toFixed(inst.digits)) : Number((entry + distSl).toFixed(inst.digits));
-      const tpPrice = side === 'BUY' ? Number((entry + distTp).toFixed(inst.digits)) : Number((entry - distTp).toFixed(inst.digits));
-      const slPips = distSl / inst.pipSize;
-      const tpPips = distTp / inst.pipSize;
-
-      state.entryLinePrice = entry;
-      state.slLinePrice = slPrice;
-      state.tpLinePrice = tpPrice;
-
-      // 1. If connected to LIVE cTrader WebSocket, send real ProtoOANewOrderReq (2106)
-      if (state.executionMode === 'LIVE_CTRADER' && state.ctraderSocket && state.ctraderSocket.readyState === WebSocket.OPEN) {
-        const accountId = parseInt(document.getElementById('inpCtraderAccountId').value.trim(), 10);
-        const volumeInCents = Math.round(state.lotSize * 10000000);
-        const payload = {
-          clientMsgId: 'ord-' + Date.now(),
-          payloadType: 2106,
-          payload: {
-            ctidTraderAccountId: accountId,
-            symbolId: inst.symbolId,
-            orderType: state.orderType === 'MARKET' ? 1 : 2,
-            tradeSide: side === 'BUY' ? 1 : 2,
-            volume: volumeInCents,
-            relativeStopLoss: Math.round(slPips * 10),
-            relativeTakeProfit: Math.round(tpPips * 10)
-          }
-        };
-        state.ctraderSocket.send(JSON.stringify(payload));
-        logApiMessage(`Đã gửi lệnh THẬT ${side} ${state.lotSize.toFixed(2)} Lot ${state.symbol} lên IC Markets cTrader (2106)...`);
-      }
-
-      // 2. If connected to LIVE MT4 MetaApi, send real POST /trade request
-      if (state.executionMode === 'LIVE_MT4') {
-        const regionUrl = document.getElementById('mt4RegionSelect').value;
-        const token = document.getElementById('inpMt4Token').value.trim();
-        const accountId = document.getElementById('inpMt4AccountId').value.trim();
-        const actionType = side === 'BUY'
-          ? (state.orderType === 'MARKET' ? 'ORDER_TYPE_BUY' : 'ORDER_TYPE_BUY_LIMIT')
-          : (state.orderType === 'MARKET' ? 'ORDER_TYPE_SELL' : 'ORDER_TYPE_SELL_LIMIT');
-
-        fetch(`${regionUrl}/users/current/accounts/${accountId}/trade`, {
-          method: 'POST',
-          headers: { 'auth-token': token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            actionType,
-            symbol: state.symbol,
-            volume: state.lotSize,
-            openPrice: entry,
-            stopLoss: slPrice,
-            takeProfit: tpPrice
-          })
-        }).then(r => {
-          if (r.ok) logApiMessage(`MT4 MetaApi đã khớp lệnh THẬT ${side} ${state.lotSize.toFixed(2)} Lot ${state.symbol}!`);
-          else logApiMessage(`MT4 MetaApi trả về mã lỗi HTTP ${r.status} khi đặt lệnh.`, true);
-        }).catch(err => logApiMessage('Lỗi gửi lệnh MT4: ' + err.message, true));
-      }
+      const entry = inst.basePrice;
+      const diff = side === 'BUY' ? inst.pipSize * 30 : -inst.pipSize * 30;
 
       state.positions.unshift({
         id: 'POS-' + Math.floor(1000 + Math.random() * 9000),
@@ -1813,535 +949,166 @@
         side,
         lots: state.lotSize,
         openPrice: entry,
-        slPrice,
-        tpPrice
+        slPrice: entry - diff,
+        tpPrice: entry + diff * 2
       });
 
-      renderPositionsTable();
-      updateHudReadouts();
-      resizeAndDrawChart();
-      const modeTag = state.executionMode === 'SIM' ? 'SIM' : 'LIVE';
-      showToast(`[${modeTag}] Khớp ${side} ${state.lotSize.toFixed(2)} Lot ${state.symbol} @ ${entry.toFixed(inst.digits)}`);
+      renderPositions();
+      showToast(`Đã khớp ${side} ${state.lotSize} Lot ${state.symbol}`);
     }
 
     document.getElementById('btnBuyExec').addEventListener('click', () => executeOrder('BUY'));
     document.getElementById('btnSellExec').addEventListener('click', () => executeOrder('SELL'));
-
     document.getElementById('btnCloseAllExec').addEventListener('click', () => {
-      if (!state.positions.length) {
-        showToast('Không có lệnh nào đang mở.');
-        return;
-      }
       state.positions = [];
-      renderPositionsTable();
-      computeInterpolatedParameters();
-      resizeAndDrawChart();
-      showToast('Đã đóng toàn bộ vị thế (Close All)!');
+      renderPositions();
+      showToast('Đã đóng toàn bộ vị thế!');
     });
 
-    // Bottom Sheet Hidden Drawer Controls
-    const drawer = document.getElementById('bottomSheetDrawer');
+    function renderPositions() {
+      const tbody = document.getElementById('positionsTableBody');
+      tbody.innerHTML = '';
+      state.positions.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="padding:8px 10px; font-weight:700; color:${p.side === 'BUY' ? state.bullColor : state.bearColor};">${p.symbol} ${p.side}</td>
+          <td style="padding:8px 10px;">${p.lots.toFixed(2)}</td>
+          <td style="padding:8px 10px;">${p.openPrice.toFixed(2)}</td>
+          <td style="padding:8px 10px;">${p.slPrice.toFixed(2)} / ${p.tpPrice.toFixed(2)}</td>
+          <td style="padding:8px 10px; color:#38BDF8; font-weight:700;">+$204.00</td>
+          <td style="padding:8px 10px; text-align:right;"><button style="background:#334155; color:#fff; border:0; padding:2px 8px; border-radius:4px;">Đóng</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('openCountBadge').textContent = state.positions.length;
+      document.getElementById('drawerPosCount').textContent = state.positions.length;
+    }
+
+    function renderMatrix() {
+      const tbody = document.getElementById('matrixTableBody');
+      tbody.innerHTML = '';
+      state.capitalMatrix.forEach((m, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="padding:8px 10px;">$${m.equity}</td>
+          <td style="padding:8px 10px; color:#38BDF8; font-weight:700;">${m.lots}</td>
+          <td style="padding:8px 10px;">$${m.maxRiskUsd}</td>
+          <td style="padding:8px 10px;">${m.slPips}</td>
+          <td style="padding:8px 10px;">${m.tpPips}</td>
+          <td style="padding:8px 10px; text-align:right;"><button style="background:transparent; color:#F87171; border:0;">Xóa</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('tradeToast');
+      t.textContent = msg;
+      t.classList.remove('hidden');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => t.classList.add('hidden'), 2200);
+    }
+
+    // Drawer Tabs
     document.getElementById('btnToggleDrawer').addEventListener('click', () => {
-      drawer.classList.toggle('translate-y-full');
+      document.getElementById('bottomSheetDrawer').style.transform = 'translateY(0)';
     });
     document.getElementById('btnCloseDrawer').addEventListener('click', () => {
-      drawer.classList.add('translate-y-full');
+      document.getElementById('bottomSheetDrawer').style.transform = 'translateY(100%)';
     });
 
-    document.querySelectorAll('.drawer-tab-btn').forEach(btn => {
+    document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const targetId = e.currentTarget.dataset.tab;
-        document.querySelectorAll('.drawer-tab-btn').forEach(b => {
-          b.className = 'drawer-tab-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white';
+        const target = e.currentTarget.dataset.tab;
+        document.querySelectorAll('.drawer-tab-pane').forEach(p => p.classList.add('hidden'));
+        document.getElementById(target).classList.remove('hidden');
+        document.querySelectorAll('[data-tab]').forEach(b => {
+          b.style.background = 'transparent';
+          b.style.color = '#94A3B8';
         });
-        e.currentTarget.className = 'drawer-tab-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-sky-500 text-slate-950';
-
-        document.querySelectorAll('.drawer-tab-pane').forEach(pane => pane.classList.add('hidden'));
-        document.getElementById(targetId).classList.remove('hidden');
+        e.currentTarget.style.background = '#38BDF8';
+        e.currentTarget.style.color = '#030D14';
       });
     });
 
-    document.getElementById('simEquitySlider').addEventListener('input', (e) => {
-      state.balance = parseFloat(e.target.value);
-      document.getElementById('simEquityLabel').textContent = '$' + state.balance.toLocaleString('en-US');
-      renderPositionsTable();
-      computeInterpolatedParameters();
-      resizeAndDrawChart();
-    });
-
-    document.getElementById('chkLinearInterp').addEventListener('change', (e) => {
-      state.linearInterpolation = e.target.checked;
-      computeInterpolatedParameters();
-      resizeAndDrawChart();
-    });
-
-    document.getElementById('chkInterpolateSl').addEventListener('change', (e) => {
-      state.interpolateSlByVol = e.target.checked;
-      computeInterpolatedParameters();
-      resizeAndDrawChart();
-    });
-
-    document.getElementById('rrRatioSelect').addEventListener('change', (e) => {
-      state.rrRatio = parseFloat(e.target.value);
-      computeInterpolatedParameters();
-      resizeAndDrawChart();
-    });
-
-    document.getElementById('btnAddMatrixTier').addEventListener('click', () => {
-      const last = state.capitalMatrix[state.capitalMatrix.length - 1] || { equity: 10000, lots: 0.5, maxRiskUsd: 200, slPips: 35, tpPips: 70 };
-      state.capitalMatrix.push({
-        equity: last.equity + 15000,
-        lots: Number((last.lots + 0.75).toFixed(2)),
-        maxRiskUsd: last.maxRiskUsd + 300,
-        slPips: last.slPips,
-        tpPips: last.tpPips
-      });
-      renderMatrixTable();
-      computeInterpolatedParameters();
-      resizeAndDrawChart();
-    });
-
-    // =========================================================================
-    // 9. COMPLETE XCODE SWIFTUI SOURCE CODE MODULES
-    // =========================================================================
-    const SWIFT_FILES = {
-      fileRiskEngine: `//
-//  RiskAndVolumeEngine.swift
-//  DuoTradePro — Target: iPhone Duo (iOS 27+, Swift 6)
-//
-//  Module 1: Nội suy tuyến tính Volume theo Bảng Vốn & Nội suy TP/SL theo Volume
-//
-
-import Foundation
-import Combine
-
-public struct CapitalTier: Identifiable, Codable, Equatable {
-    public var id = UUID()
-    public var equity: Double
-    public var baseLots: Double
-    public var maxRiskUSD: Double
-    public var defaultSLPips: Double
-    public var defaultTPPips: Double
-}
-
-public struct SymbolSpec: Codable {
-    public let symbol: String
-    public let pipSize: Double
-    public let pipValuePerLot: Double
-    public let minVolumeLots: Double = 0.01
-    public let stepVolumeLots: Double = 0.01
-}
-
-public final class RiskAndVolumeEngine: ObservableObject {
-    @Published public var tiers: [CapitalTier] = [
-        CapitalTier(equity: 5_000,  baseLots: 0.25, maxRiskUSD: 100, defaultSLPips: 40, defaultTPPips: 80),
-        CapitalTier(equity: 10_000, baseLots: 0.50, maxRiskUSD: 200, defaultSLPips: 40, defaultTPPips: 80),
-        CapitalTier(equity: 20_000, baseLots: 1.20, maxRiskUSD: 400, defaultSLPips: 33, defaultTPPips: 66),
-        CapitalTier(equity: 50_000, baseLots: 3.00, maxRiskUSD: 1000, defaultSLPips: 33, defaultTPPips: 66)
-    ]
-    
-    @Published public var useLinearInterpolation: Bool = true
-    @Published public var interpolateSLByVolume: Bool = true
-    @Published public var rewardToRiskRatio: Double = 2.0
-    
-    public func evaluateOrderParameters(
-        currentEquity: Double,
-        spec: SymbolSpec,
-        overrideLots: Double? = nil
-    ) -> (lots: Double, slPips: Double, tpPips: Double, riskUSD: Double) {
-        let sorted = tiers.sorted { $0.equity < $1.equity }
-        guard let first = sorted.first, let last = sorted.last else {
-            return (0.01, 30, 60, 3.0)
-        }
-        
-        var targetLots = first.baseLots
-        var targetRiskUSD = first.maxRiskUSD
-        var presetSLPips = first.defaultSLPips
-        
-        if currentEquity <= first.equity {
-            targetLots = first.baseLots
-            targetRiskUSD = first.maxRiskUSD
-            presetSLPips = first.defaultSLPips
-        } else if currentEquity >= last.equity {
-            targetLots = last.baseLots
-            targetRiskUSD = last.maxRiskUSD
-            presetSLPips = last.defaultSLPips
-        } else {
-            for i in 0..<(sorted.count - 1) {
-                let t1 = sorted[i]
-                let t2 = sorted[i + 1]
-                if currentEquity >= t1.equity && currentEquity <= t2.equity {
-                    if useLinearInterpolation {
-                        let ratio = (currentEquity - t1.equity) / max(1.0, (t2.equity - t1.equity))
-                        targetLots = t1.baseLots + ratio * (t2.baseLots - t1.baseLots)
-                        targetRiskUSD = t1.maxRiskUSD + ratio * (t2.maxRiskUSD - t1.maxRiskUSD)
-                        presetSLPips = t1.defaultSLPips + ratio * (t2.defaultSLPips - t1.defaultSLPips)
-                    } else {
-                        targetLots = t1.baseLots
-                        targetRiskUSD = t1.maxRiskUSD
-                        presetSLPips = t1.defaultSLPips
-                    }
-                    break
-                }
-            }
-        }
-        
-        let finalLots = roundToStep(overrideLots ?? targetLots, step: spec.stepVolumeLots)
-        let slPips = interpolateSLByVolume
-            ? max(3.0, targetRiskUSD / max(0.01, finalLots * spec.pipValuePerLot))
-            : presetSLPips
-        let tpPips = slPips * rewardToRiskRatio
-        return (finalLots, slPips, tpPips, finalLots * slPips * spec.pipValuePerLot)
-    }
-    
-    private func roundToStep(_ value: Double, step: Double) -> Double {
-        return max(step, (value / step).rounded() * step)
-    }
-}`,
-
-      fileCTraderService: `//
-//  ICMarketsService.swift
-//  DuoTradePro — Kết nối IC Markets cTrader Open API (WebSocket :5036 JSON) & MT4 MetaApi
-//
-
-import Foundation
-
-public enum BrokerProtocolRoute: String {
-    case cTraderOpenAPI = "wss://live.ctraderapi.com:5036"
-    case mt4MetaApiBridge = "wss://mt-client-api-v1.agiliumtrade.agiliumtrade.ai/ws"
-}
-
-public final class ICMarketsService: NSObject, ObservableObject, URLSessionWebSocketDelegate {
-    @Published public var isConnected: Bool = false
-    @Published public var liveBalance: Double = 20_450.00
-    @Published public var liveEquity: Double = 20_654.00
-    @Published public var latestBid: Double = 2642.50
-    
-    private var webSocketTask: URLSessionWebSocketTask?
-    private var heartbeatTimer: Timer?
-    private let clientId: String
-    private let clientSecret: String
-    private let ctidTraderAccountId: Int64
-    
-    public init(clientId: String, clientSecret: String, accountId: Int64) {
-        self.clientId = clientId
-        self.clientSecret = clientSecret
-        self.ctidTraderAccountId = accountId
-        super.init()
-    }
-    
-    public func connect(route: BrokerProtocolRoute = .cTraderOpenAPI) {
-        guard let url = URL(string: route.rawValue) else { return }
-        let session = URLSession(configuration: .default, delegate: self, delegateQueue: OperationQueue())
-        webSocketTask = session.webSocketTask(with: url)
-        webSocketTask?.resume()
-        listenForMessages()
-        startHeartbeatEvery10Seconds()
-    }
-    
-    private func startHeartbeatEvery10Seconds() {
-        heartbeatTimer?.invalidate()
-        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
-            let heartbeatJSON = #"{"payloadType":51,"clientMsgId":"hb-keepalive"}"#
-            self?.sendRawJSON(heartbeatJSON)
-        }
-    }
-    
-    public func sendOrder(
-        symbolId: Int64,
-        isBuy: Bool,
-        lots: Double,
-        relativeSLPips: Double,
-        relativeTPPips: Double
-    ) {
-        let volumeInCents = Int64(lots * 10_000_000)
-        let tradeSide = isBuy ? 1 : 2
-        let relSL = Int64(relativeSLPips * 10)
-        let relTP = Int64(relativeTPPips * 10)
-        
-        let payload = """
-        {
-          "payloadType": 2106,
-          "payload": {
-            "ctidTraderAccountId": \\(ctidTraderAccountId),
-            "symbolId": \\(symbolId),
-            "orderType": 1,
-            "tradeSide": \\(tradeSide),
-            "volume": \\(volumeInCents),
-            "relativeStopLoss": \\(relSL),
-            "relativeTakeProfit": \\(relTP)
-          }
-        }
-        """
-        sendRawJSON(payload)
-    }
-    
-    private func sendRawJSON(_ text: String) {
-        webSocketTask?.send(.string(text)) { error in
-            if let error = error { print("WS Send Error: \\(error)") }
-        }
-    }
-    
-    private func listenForMessages() {
-        webSocketTask?.receive { [weak self] result in
-            guard let self = self else { return }
-            if case .success(let message) = result, case .string(_) = message {
-                DispatchQueue.main.async { self.isConnected = true }
-            }
-            self.listenForMessages()
-        }
-    }
-}`,
-
-      fileDuoViews: `//
-//  DuoTradingView.swift
-//  DuoTradePro — Tối đa diện tích Chart, Crosshair, Màu Nến Tùy Chỉnh & Xoay Màn Hình Mở/Gập
-//
-
-import SwiftUI
-import LightweightCharts
-
-public struct DuoTradingView: View {
-    @StateObject private var riskEngine = RiskAndVolumeEngine()
-    @StateObject private var broker = ICMarketsService(
-        clientId: "IC_CTRADER_CLIENT_ID",
-        clientSecret: "IC_CTRADER_SECRET",
-        accountId: 4092817
-    )
-    
-    @State private var selectedTimeframe: String = "M15"
-    @State private var isCrosshairEnabled: Bool = true
-    @State private var crosshairLocation: CGPoint? = nil
-    @State private var showHiddenMenuSheet: Bool = false
-    
-    @State private var bullColor = Color(red: 0.22, green: 0.74, blue: 0.97)
-    @State private var bearColor = Color(red: 0.60, green: 0.11, blue: 0.11)
-    
-    private let xauSpec = SymbolSpec(symbol: "XAUUSD", pipSize: 0.10, pipValuePerLot: 10.0)
-    
-    public var body: some View {
-        GeometryReader { geo in
-            let isUnfolded = min(geo.size.width, geo.size.height) > 560
-            let isLandscape = geo.size.width > geo.size.height
-            
-            ZStack {
-                Color(red: 0.02, green: 0.03, blue: 0.05).ignoresSafeArea()
-                
-                LightweightChartContainer(
-                    timeframe: selectedTimeframe,
-                    bullColor: bullColor,
-                    bearColor: bearColor
-                )
-                .ignoresSafeArea()
-                
-                if isCrosshairEnabled {
-                    CrosshairCanvasOverlay(location: $crosshairLocation)
-                }
-                
-                VStack {
-                    minimalTopBar(isUnfolded: isUnfolded, isLandscape: isLandscape)
-                    Spacer()
-                    minimalBottomExecutionBar()
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-            }
-        }
-        .sheet(isPresented: $showHiddenMenuSheet) {
-            HiddenConfigurationSheet(
-                riskEngine: riskEngine,
-                bullColor: $bullColor,
-                bearColor: $bearColor
-            )
-            .presentationDetents([.medium, .large])
-            .presentationBackground(.ultraThinMaterial)
-        }
-    }
-    
-    @ViewBuilder
-    private func minimalTopBar(isUnfolded: Bool, isLandscape: Bool) -> some View {
-        HStack(spacing: 8) {
-            HStack(spacing: 3) {
-                ForEach(["M1", "M5", "M15", "H1", "H4", "D1"], id: \\.self) { tf in
-                    Button(tf) { selectedTimeframe = tf }
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 4)
-                        .background(selectedTimeframe == tf ? bullColor : Color.clear)
-                        .foregroundColor(selectedTimeframe == tf ? .black : .gray)
-                        .clipShape(RoundedRectangle(cornerRadius: 5))
-                }
-            }
-            Spacer()
-            HStack(spacing: 12) {
-                Text("Bal: $\\(String(format: "%.0f", broker.liveBalance))")
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                    .foregroundColor(.white)
-                Text("Eq: $\\(String(format: "%.0f", broker.liveEquity))")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundColor(bullColor)
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-    
-    @ViewBuilder
-    private func minimalBottomExecutionBar() -> some View {
-        let params = riskEngine.evaluateOrderParameters(currentEquity: broker.liveEquity, spec: xauSpec)
-        
-        HStack(spacing: 8) {
-            Button(isCrosshairEnabled ? "✢ Crosshair" : "✢ Tắt") {
-                isCrosshairEnabled.toggle()
-            }
-            .font(.system(size: 11, weight: .semibold, design: .monospaced))
-            .padding(.horizontal, 8).padding(.vertical, 7)
-            .background(isCrosshairEnabled ? bullColor.opacity(0.2) : Color.black.opacity(0.4))
-            .foregroundColor(isCrosshairEnabled ? bullColor : .gray)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            
-            Text("Vol: \\(String(format: "%.2f", params.lots)) Lot")
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
-                .foregroundColor(.white)
-                .padding(.horizontal, 8).padding(.vertical, 7)
-                .background(Color.black.opacity(0.5))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            
-            Spacer()
-            
-            Button("SELL") {
-                broker.sendOrder(symbolId: 41, isBuy: false, lots: params.lots, relativeSLPips: params.slPips, relativeTPPips: params.tpPips)
-            }
-            .font(.system(size: 13, weight: .bold, design: .monospaced))
-            .foregroundColor(.white)
-            .padding(.horizontal, 14).padding(.vertical, 7)
-            .background(bearColor)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            
-            Button("BUY") {
-                broker.sendOrder(symbolId: 41, isBuy: true, lots: params.lots, relativeSLPips: params.slPips, relativeTPPips: params.tpPips)
-            }
-            .font(.system(size: 13, weight: .bold, design: .monospaced))
-            .foregroundColor(.black)
-            .padding(.horizontal, 14).padding(.vertical, 7)
-            .background(bullColor)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            
-            Button("Close") { }
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                .foregroundColor(.white)
-                .padding(.horizontal, 10).padding(.vertical, 7)
-                .background(Color.gray.opacity(0.3))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            
-            Button("☰") { showHiddenMenuSheet = true }
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(bullColor)
-                .padding(.horizontal, 10).padding(.vertical, 7)
-                .background(Color.gray.opacity(0.25))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-}`
-    };
-
-    let currentSwiftFileKey = 'fileRiskEngine';
-    const swiftModal = document.getElementById('swiftCodeModal');
-    const swiftDisplay = document.getElementById('swiftCodeDisplay');
-
-    function renderSwiftModalCode(key) {
-      currentSwiftFileKey = key;
-      swiftDisplay.textContent = SWIFT_FILES[key] || '';
-    }
-
-    document.getElementById('btnOpenSwiftModal').addEventListener('click', () => {
-      renderSwiftModalCode(currentSwiftFileKey);
-      swiftModal.classList.remove('hidden');
-    });
-
-    document.getElementById('btnCloseSwiftModal').addEventListener('click', () => {
-      swiftModal.classList.add('hidden');
-    });
-
-    document.querySelectorAll('.swift-file-btn').forEach(btn => {
+    // Timeframe selector
+    document.querySelectorAll('.tf-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.swift-file-btn').forEach(b => {
-          b.className = 'swift-file-btn px-3 py-1 rounded text-slate-400 hover:text-white';
+        document.querySelectorAll('.tf-btn').forEach(b => {
+          b.style.background = 'transparent';
+          b.style.color = '#94A3B8';
         });
-        e.currentTarget.className = 'swift-file-btn px-3 py-1 rounded bg-sky-500/25 text-sky-300 border border-sky-500/40';
-        renderSwiftModalCode(e.currentTarget.dataset.swift);
-      });
-    });
-
-    document.getElementById('btnCopySwiftCode').addEventListener('click', () => {
-      const allCode = Object.values(SWIFT_FILES).join('\n\n// =====================================================\n\n');
-      try {
-        navigator.clipboard.writeText(allCode);
-      } catch (err) {
-        const ta = document.createElement('textarea');
-        ta.value = allCode;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-      }
-      const btn = document.getElementById('btnCopySwiftCode');
-      btn.textContent = 'Đã sao chép toàn bộ 3 file Swift!';
-      setTimeout(() => { btn.textContent = 'Sao chép toàn bộ Swift Code'; }, 2200);
-    });
-
-    // =========================================================================
-    // 10. LIVE REAL-TIME PRICE TICK STREAM
-    // =========================================================================
-    let tickInterval = null;
-    function startLiveTicks() {
-      if (tickInterval) clearInterval(tickInterval);
-      tickInterval = setInterval(() => {
-        const inst = INSTRUMENTS[state.symbol];
-        const lastCandle = state.candles[state.candles.length - 1];
-        if (!lastCandle) return;
-
-        const step = (Math.random() - 0.492) * inst.pipSize * 1.8;
-        const newClose = Number((lastCandle.close + step).toFixed(inst.digits));
-        lastCandle.close = newClose;
-        if (newClose > lastCandle.high) lastCandle.high = newClose;
-        if (newClose < lastCandle.low) lastCandle.low = newClose;
-        lastCandle.vol += Math.floor(Math.random() * 5);
-        inst.basePrice = newClose;
-
-        if (!state.draggingLine && state.orderType === 'MARKET') {
-          const diff = newClose - state.entryLinePrice;
-          state.entryLinePrice = newClose;
-          state.slLinePrice = Number((state.slLinePrice + diff).toFixed(inst.digits));
-          state.tpLinePrice = Number((state.tpLinePrice + diff).toFixed(inst.digits));
-        }
-
-        const priceEl = document.getElementById('livePriceDisplay');
-        priceEl.textContent = newClose.toFixed(inst.digits);
-
-        renderPositionsTable();
-        updateHudReadouts();
+        e.currentTarget.style.background = '#38BDF8';
+        e.currentTarget.style.color = '#030D14';
+        state.timeframe = e.currentTarget.dataset.tf;
+        generateCandlesForSymbol(state.symbol);
         resizeAndDrawChart();
-      }, 950);
-    }
+      });
+    });
 
-    // Initialize on load
-    window.addEventListener('resize', resizeAndDrawChart);
-    window.addEventListener('load', () => {
-      loadSavedCredentials();
-      applyCustomColors('#38BDF8', '#991B1B');
-      generateCandlesForSymbol(state.symbol);
-      renderMatrixTable();
-      renderPositionsTable();
+    document.getElementById('btnCrosshairTool').addEventListener('click', (e) => {
+      state.crosshairEnabled = !state.crosshairEnabled;
+      e.currentTarget.style.background = state.crosshairEnabled ? 'rgba(56,189,248,0.2)' : 'transparent';
+      if (!state.crosshairEnabled) state.crosshairPos = null;
+      resizeAndDrawChart();
+    });
+
+    // Initialize
+    
+    document.getElementById('btnClearApiLog').addEventListener('click', () => {
+      document.getElementById('apiConsoleLog').innerHTML = '';
+    });
+    document.getElementById('btnResetColors').addEventListener('click', () => {
+      state.bullColor = '#38BDF8';
+      state.bearColor = '#991B1B';
+      document.documentElement.style.setProperty('--bull-color', '#38BDF8');
+      document.documentElement.style.setProperty('--bear-color', '#991B1B');
+      resizeAndDrawChart();
+      showToast('Đã đặt lại màu nến chuẩn!');
+    });
+    document.getElementById('btnToggleLines').addEventListener('click', (e) => {
+      state.showOverlayLines = !state.showOverlayLines;
+      e.currentTarget.textContent = 'Đường TP/SL: ' + (state.showOverlayLines ? 'BẬT' : 'TẮT');
+      resizeAndDrawChart();
+    });
+    document.getElementById('btnAddMatrixTier').addEventListener('click', () => {
+      state.capitalMatrix.push({ equity: 75000, lots: 4.5, maxRiskUsd: 1500, slPips: 30, tpPips: 60 });
+      renderMatrix();
       computeInterpolatedParameters();
-      applyDeviceViewportGeometry();
-      startLiveTicks();
+    });
+    document.getElementById('btnApiCtrader').addEventListener('click', () => {
+      document.getElementById('formCtraderPanel').style.display = 'flex';
+      document.getElementById('formMt4Panel').style.display = 'none';
+      document.getElementById('btnApiCtrader').style.background = '#38BDF8';
+      document.getElementById('btnApiCtrader').style.color = '#030D14';
+      document.getElementById('btnApiMt4').style.background = '#1E293B';
+      document.getElementById('btnApiMt4').style.color = '#94A3B8';
+    });
+    document.getElementById('btnApiMt4').addEventListener('click', () => {
+      document.getElementById('formCtraderPanel').style.display = 'none';
+      document.getElementById('formMt4Panel').style.display = 'flex';
+      document.getElementById('btnApiMt4').style.background = '#FBBF24';
+      document.getElementById('btnApiMt4').style.color = '#030D14';
+      document.getElementById('btnApiCtrader').style.background = '#1E293B';
+      document.getElementById('btnApiCtrader').style.color = '#94A3B8';
+    });
+    document.getElementById('btnConnectMt4Live').addEventListener('click', () => {
+      const tok = document.getElementById('inpMt4Token').value.trim();
+      const acc = document.getElementById('inpMt4AccountId').value.trim();
+      if (!tok || !acc) { showToast('Vui lòng nhập Token & Account ID MT4!'); return; }
+      state.executionMode = 'LIVE_MT4';
+      document.getElementById('activeBrokerBadge').textContent = 'LIVE: MT4 #' + acc.slice(0,6);
+      document.getElementById('activeBrokerBadge').style.background = 'rgba(245,158,11,0.2)';
+      document.getElementById('activeBrokerBadge').style.color = '#FBBF24';
+      logApiMessage('Đã kết nối tài khoản MT4 MetaApi!');
+      showToast('Kết nối MT4 thành công!');
+    });
+
+    window.addEventListener('load', () => {
+      generateCandlesForSymbol(state.symbol);
+      renderMatrix();
+      renderPositions();
+      detectRealScreenAndLayout();
     });
   </script>
 </body>

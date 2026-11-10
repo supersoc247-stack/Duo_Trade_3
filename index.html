@@ -6,9 +6,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="DuoTrade Pro" />
-  <meta name="theme-color" content="#040609" />
-  <title>DuoTrade Pro — iPhone Duo Native Fullscreen Terminal</title>
+  <meta name="theme-color" content="#000000" />
+  <title>DuoTrade Pro — iPhone Duo Full-Screen Terminal</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <style>
+    /* Zero-Chrome Native Full-Screen Styles (MT5 iPadOS/iPhone Duo Inspired) */
     :root {
       --bull-color: #38BDF8;
       --bear-color: #991B1B;
@@ -20,7 +22,8 @@
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
     html, body {
       margin: 0;
@@ -28,242 +31,292 @@
       width: 100vw;
       height: 100vh;
       height: 100dvh;
-      background-color: #040609;
+      background-color: #000000;
       color: #E2E8F0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
       overflow: hidden;
-      user-select: none;
-      -webkit-user-select: none;
+      position: fixed;
+      inset: 0;
     }
     .font-mono {
       font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
     }
     .hidden { display: none !important; }
-    
-    /* 100% Full-bleed container filling native iPhone Duo display */
-    #nativeAppRoot {
-      position: absolute;
+
+    /* Root container: 100% edge-to-edge */
+    #appViewport {
+      position: fixed;
       inset: 0;
       width: 100vw;
       height: 100vh;
       height: 100dvh;
       display: flex;
       flex-direction: column;
+      background: #000000;
       overflow: hidden;
-      background-color: #040609;
     }
 
-    /* Hardware Simulator Bar (shown when opened on Desktop, hidden automatically in Standalone PWA on iPhone) */
-    #desktopSimToolbar {
-      background: #0B0F17;
-      border-bottom: 1px solid #1E293B;
-      padding: 6px 12px;
+    /* Main Workspace: Left Rail (38px) + Chart Canvas (Flex 1) */
+    #mainWorkspace {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: row;
+      overflow: hidden;
+    }
+
+    /* MT5-Style Ultra-Slim Left Tool Rail */
+    #leftToolRail {
+      width: calc(38px + var(--sal));
+      padding-left: var(--sal);
+      padding-top: calc(var(--sat) + 6px);
+      padding-bottom: 8px;
+      background: #000000;
+      border-right: 1px solid #161B22;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 25;
+      flex-shrink: 0;
+    }
+    .rail-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      border: 0;
+      background: transparent;
+      color: #8B949E;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .rail-btn:hover, .rail-btn:active {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .rail-btn.active {
+      color: var(--bull-color);
+      background: rgba(56, 189, 248, 0.16);
+    }
+
+    /* MT5-Style Bottom Execution & Account Dock */
+    #bottomExecutionDock {
+      min-height: calc(48px + var(--sab));
+      padding-bottom: var(--sab);
+      padding-left: calc(10px + var(--sal));
+      padding-right: calc(10px + var(--sar));
+      background: #070A0F;
+      border-top: 1px solid #161B22;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 6px;
-      font-size: 11px;
-      z-index: 50;
+      gap: 8px;
+      z-index: 30;
+      flex-shrink: 0;
     }
 
-    /* Glass HUD Bars pinned with Safe Area insets */
-    .glass-hud {
-      background: rgba(8, 12, 18, 0.78);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    }
     .glass-drawer {
-      background: rgba(7, 10, 16, 0.98);
-      backdrop-filter: blur(30px);
-      -webkit-backdrop-filter: blur(30px);
-      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(8, 11, 16, 0.98);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
     }
 
-    /* Center Fold Hinge Indicator (dynamically rotates vertical/horizontal) */
-    #hardwareHingeCrease {
-      position: absolute;
-      pointer-events: none;
-      z-index: 15;
-      display: none;
-    }
-    .crease-v {
-      inset-block: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 16px;
-      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.02) 40%, rgba(0,0,0,0.45) 50%, rgba(255,255,255,0.02) 60%, transparent 100%);
-    }
-    .crease-h {
-      inset-inline: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      height: 16px;
-      background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.02) 40%, rgba(0,0,0,0.45) 50%, rgba(255,255,255,0.02) 60%, transparent 100%);
-    }
-
-    /* Dynamic Button Colors */
     .btn-bull-dynamic {
       background-color: var(--bull-color);
-      color: #030D14;
+      color: #02080D;
     }
+    .btn-bull-dynamic:active { filter: brightness(0.9); transform: scale(0.97); }
     .btn-bear-dynamic {
       background-color: var(--bear-color);
       color: #FFFFFF;
     }
+    .btn-bear-dynamic:active { filter: brightness(1.15); transform: scale(0.97); }
     .text-bull-dynamic { color: var(--bull-color); }
     .text-bear-dynamic { color: var(--bear-color); }
 
-    /* Custom range input */
     input[type=range] { accent-color: #38BDF8; }
   </style>
 </head>
 <body>
 
-  <div id="nativeAppRoot">
+  <div id="appViewport">
 
-    <!-- DESKTOP SIMULATOR TOPBAR (Auto-hidden in Standalone PWA on iPhone) -->
-    <header id="desktopSimToolbar">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-weight:700; color:#fff;">DuoTrade Pro</span>
-        <span id="activeBrokerBadge" class="font-mono" style="padding:2px 8px; border-radius:4px; background:rgba(245,158,11,0.15); color:#FBBF24; border:1px solid rgba(245,158,11,0.3);">
-          CHẾ ĐỘ: GIẢ LẬP (SIM)
-        </span>
-        <span id="screenDetectBadge" class="font-mono" style="color:#94A3B8;">
-          Màn hình: Đang nhận diện...
-        </span>
-      </div>
+    <!-- MAIN WORKSPACE: LEFT MT5 RAIL + FULL-BLEED CHART -->
+    <div id="mainWorkspace">
 
-      <div style="display:flex; align-items:center; gap:6px;">
-        <!-- Manual override buttons if testing on desktop -->
-        <button id="btnForceUnfolded" style="background:#1E293B; color:#E2E8F0; border:1px solid #334155; padding:3px 8px; border-radius:6px; font-size:11px;">Mở 7.6"</button>
-        <button id="btnForceFolded" style="background:#1E293B; color:#E2E8F0; border:1px solid #334155; padding:3px 8px; border-radius:6px; font-size:11px;">Gập 5.4"</button>
-        <button id="btnQuickSignIn" style="background:rgba(16,185,129,0.2); color:#6EE7B7; border:1px solid rgba(16,185,129,0.4); padding:3px 10px; border-radius:6px; font-size:11px; font-weight:600;">
-          🔑 Đăng nhập IC Markets
-        </button>
-      </div>
-    </header>
-
-    <!-- PURE FULL-BLEED CHART CONTAINER (Occupies 100% Viewport) -->
-    <div id="chartWrapper" style="position:relative; flex:1; width:100%; height:100%; overflow:hidden;">
-      <canvas id="tradingCanvas" style="display:block; width:100%; height:100%; cursor:crosshair;"></canvas>
-
-      <!-- Center Fold Crease Line (Active only in Unfolded mode) -->
-      <div id="hardwareHingeCrease" class="crease-v"></div>
-
-      <!-- ULTRA-MINIMAL TOP FLOATING HUD (Pinned to Safe Area Top) -->
-      <div id="topHudBar" class="glass-hud" style="position:absolute; top:calc(var(--sat) + 8px); left:calc(var(--sal) + 10px); right:calc(var(--sar) + 10px); z-index:20; padding:6px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <!-- Timeframe selector -->
-        <div style="display:flex; align-items:center; gap:3px;" id="timeframeGroup">
-          <button data-tf="M1" class="tf-btn font-mono" style="background:transparent; color:#94A3B8; border:0; padding:3px 6px; font-size:11px; border-radius:4px; font-weight:600;">M1</button>
-          <button data-tf="M5" class="tf-btn font-mono" style="background:transparent; color:#94A3B8; border:0; padding:3px 6px; font-size:11px; border-radius:4px; font-weight:600;">M5</button>
-          <button data-tf="M15" class="tf-btn font-mono" style="background:#38BDF8; color:#030D14; border:0; padding:3px 7px; font-size:11px; border-radius:4px; font-weight:700;">M15</button>
-          <button data-tf="H1" class="tf-btn font-mono" style="background:transparent; color:#94A3B8; border:0; padding:3px 6px; font-size:11px; border-radius:4px; font-weight:600;">H1</button>
-          <button data-tf="H4" class="tf-btn font-mono" style="background:transparent; color:#94A3B8; border:0; padding:3px 6px; font-size:11px; border-radius:4px; font-weight:600;">H4</button>
-          <button data-tf="D1" class="tf-btn font-mono" style="background:transparent; color:#94A3B8; border:0; padding:3px 6px; font-size:11px; border-radius:4px; font-weight:600;">D1</button>
-        </div>
-
-        <!-- Balance & Equity -->
-        <div style="display:flex; align-items:center; gap:12px; font-size:12px;" class="font-mono">
-          <div>
-            <span style="color:#64748B; font-size:10px;">Bal:</span>
-            <span id="hudBalanceDisplay" style="font-weight:700; color:#F8FAFC;">$20,450.00</span>
-          </div>
-          <div>
-            <span style="color:#64748B; font-size:10px;">Eq:</span>
-            <span id="hudEquityDisplay" class="text-bull-dynamic" style="font-weight:700;">$20,654.00</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Subtle Crosshair Info Pill (Appears when dragging/hovering) -->
-      <div id="crosshairInspectBar" class="glass-hud hidden font-mono" style="position:absolute; top:calc(var(--sat) + 52px); left:calc(var(--sal) + 10px); z-index:20; padding:4px 10px; font-size:10px; display:flex; align-items:center; gap:8px;">
-        <span id="chSymbolTf" style="font-weight:700; color:#38BDF8;">XAUUSD • M15</span>
-        <span id="ohlcReadout" style="color:#CBD5E1;">O: 2641.20 H: 2643.80 L: 2640.50 C: 2642.50</span>
-        <span id="chDeltaInfo" style="color:#38BDF8;"></span>
-      </div>
-
-      <!-- Toast Notification -->
-      <div id="tradeToast" class="glass-hud hidden font-mono" style="position:absolute; top:calc(var(--sat) + 52px); right:calc(var(--sar) + 12px); z-index:30; padding:6px 14px; font-size:11px; color:#fff; border:1px solid rgba(56,189,248,0.4);">
-        Đã khớp lệnh!
-      </div>
-
-      <!-- ULTRA-MINIMAL BOTTOM FLOATING EXECUTION BAR (Pinned to Safe Area Bottom) -->
-      <div id="bottomHudBar" class="glass-hud" style="position:absolute; bottom:calc(var(--sab) + 8px); left:calc(var(--sal) + 10px); right:calc(var(--sar) + 10px); z-index:20; padding:6px 12px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
-        
-        <!-- Left: Crosshair Toggle & Interpolated Volume -->
-        <div style="display:flex; align-items:center; gap:8px;">
-          <button id="btnCrosshairTool" class="font-mono" style="background:rgba(56,189,248,0.2); color:#38BDF8; border:1px solid rgba(56,189,248,0.4); padding:6px 10px; border-radius:8px; font-size:11px; font-weight:600;">
-            ✢ Crosshair
+      <!-- LEFT VERTICAL TOOL RAIL (MT5 Style: Crosshair, Timeframe Cycle, TP/SL Lines, Quick Trade, Menu) -->
+      <aside id="leftToolRail">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+          <!-- Crosshair Tool (+) -->
+          <button id="btnCrosshairTool" class="rail-btn active" title="Bật/Tắt Crosshair (+)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="3" x2="12" y2="21"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
           </button>
 
-          <div style="background:#0F172A; border:1px solid #1E293B; padding:5px 10px; border-radius:8px; display:flex; align-items:center; gap:4px; font-size:12px;" class="font-mono">
-            <span style="color:#64748B; font-size:10px;">Vol:</span>
-            <strong id="hudInterpolatedVol" style="color:#F8FAFC; font-size:13px;">1.23</strong>
-            <span style="color:#64748B; font-size:10px;">Lot</span>
+          <!-- Direct Timeframe Buttons on Left Rail -->
+          <button data-tf="M1" class="tf-btn rail-btn font-mono" style="font-size:10px;">M1</button>
+          <button data-tf="M5" class="tf-btn rail-btn font-mono" style="font-size:10px;">M5</button>
+          <button data-tf="M15" class="tf-btn rail-btn active font-mono" style="font-size:10px;">M15</button>
+          <button data-tf="H1" class="tf-btn rail-btn font-mono" style="font-size:10px;">H1</button>
+          <button data-tf="H4" class="tf-btn rail-btn font-mono" style="font-size:10px;">H4</button>
+          <button data-tf="D1" class="tf-btn rail-btn font-mono" style="font-size:10px;">D1</button>
+
+          <!-- Toggle TP/SL Draggable Lines on Chart -->
+          <button id="btnToggleLines" class="rail-btn active font-mono" title="Ẩn/Hiện đường kéo TP/SL trên Chart" style="font-size:9px; border:1px solid rgba(56,189,248,0.25);">
+            TP/SL
+          </button>
+        </div>
+
+        <!-- Bottom of Left Rail: Quick Broker Status Dot & Settings Drawer -->
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <button id="btnQuickSignIn" class="rail-btn" title="Đăng nhập IC Markets Live/Demo">
+            <span id="connStatusDot" style="width:9px; height:9px; border-radius:999px; background:#F59E0B; display:block;"></span>
+          </button>
+          <button id="btnOpenDrawerRail" class="rail-btn" title="Mở Bảng Vốn & Cài đặt">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+        </div>
+      </aside>
+
+      <!-- PURE MT5-STYLE CANDLESTICK CHART AREA (100% Remaining Width & Height) -->
+      <div id="chartWrapper" style="position:relative; flex:1; width:100%; height:100%; background:#000000; overflow:hidden;">
+        <canvas id="tradingCanvas" style="display:block; width:100%; height:100%; cursor:crosshair;"></canvas>
+
+        <!-- MT5-Style Top-Left Transparent Header Overlay (Symbol▼ + Timeframe + Description + Live OHLC) -->
+        <div style="position:absolute; top:calc(var(--sat) + 6px); left:10px; z-index:20; pointer-events:auto;">
+          <div style="display:flex; align-items:baseline; gap:6px;">
+            <button id="btnSymbolTrigger" style="background:transparent; border:0; padding:0; color:#FFFFFF; font-weight:700; font-size:14px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+              <span id="headerSymbolText">XAUUSD</span>
+              <span style="font-size:9px; color:#8B949E;">▼</span>
+            </button>
+            <span id="headerTfText" style="color:#E2E8F0; font-size:14px; font-weight:500;">M15</span>
+            <span id="activeBrokerBadge" class="font-mono" style="font-size:9px; padding:1px 5px; border-radius:3px; background:rgba(255,255,255,0.08); color:#94A3B8;">SIM</span>
+          </div>
+          <div id="headerSymbolDesc" style="color:#8B949E; font-size:11px; margin-top:1px;">
+            Gold vs US Dollar • <span id="ohlcReadout" class="font-mono" style="font-size:10px; color:#94A3B8;">O:2641.20 H:2643.80 L:2640.50 C:2642.50</span>
+          </div>
+          <!-- Crosshair inspection delta line -->
+          <div id="crosshairInspectBar" class="hidden font-mono" style="margin-top:2px; font-size:10px; color:#38BDF8;">
+            <span id="chSymbolTf"></span> <span id="chDeltaInfo"></span>
           </div>
         </div>
 
-        <!-- Right: BUY / SELL / Close / Menu -->
-        <div style="display:flex; align-items:center; gap:6px;">
-          <button id="btnSellExec" class="btn-bear-dynamic font-mono" style="border:0; padding:8px 16px; border-radius:10px; font-weight:800; font-size:13px;">
-            SELL
-          </button>
-          <button id="btnBuyExec" class="btn-bull-dynamic font-mono" style="border:0; padding:8px 16px; border-radius:10px; font-weight:800; font-size:13px;">
-            BUY
-          </button>
-          <button id="btnCloseAllExec" class="font-mono" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:8px 12px; border-radius:10px; font-size:11px;">
-            Close (<span id="openCountBadge">1</span>)
-          </button>
-          <button id="btnToggleDrawer" class="font-mono" style="background:#1E293B; color:#38BDF8; border:1px solid #334155; padding:8px 12px; border-radius:10px; font-size:12px;">
-            ☰ Menu
-          </button>
+        <!-- Subtle Toast Notification inside Chart -->
+        <div id="tradeToast" class="hidden font-mono" style="position:absolute; top:calc(var(--sat) + 10px); right:80px; z-index:30; background:rgba(15,23,42,0.92); border:1px solid rgba(56,189,248,0.45); padding:5px 12px; border-radius:8px; font-size:11px; color:#fff;">
+          Đã khớp lệnh!
         </div>
       </div>
 
     </div>
 
-    <!-- SLIDE-UP GLASSMORPHIC HIDDEN DRAWER (Capital Matrix, Positions, Colors, Broker Login) -->
-    <div id="bottomSheetDrawer" class="glass-drawer" style="position:absolute; inset-inline:0; bottom:0; height:86%; z-index:40; transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); display:flex; flex-direction:column; border-radius:24px 24px 0 0; padding-bottom:var(--sab);">
-      
-      <!-- Drawer Header & Tabs -->
-      <div style="padding:12px 16px 8px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
-        <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
-          <button data-tab="tabMatrix" id="btnTabMatrix" style="background:#38BDF8; color:#030D14; border:0; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700;">
-            1. Bảng Vốn &amp; TP/SL
-          </button>
-          <button data-tab="tabPositions" id="btnTabPositions" style="background:transparent; color:#94A3B8; border:0; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600;">
-            2. Vị Thế Mở (<span id="drawerPosCount">1</span>)
-          </button>
-          <button data-tab="tabAppearance" id="btnTabAppearance" style="background:transparent; color:#94A3B8; border:0; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600;">
-            3. Mã &amp; Màu Nến
-          </button>
-          <button data-tab="tabApi" id="btnTabApi" style="background:rgba(16,185,129,0.15); color:#6EE7B7; border:1px solid rgba(16,185,129,0.3); padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700;">
-            4. 🔑 Đăng nhập IC Markets
-          </button>
+    <!-- BOTTOM EXECUTION & CORE INFO DOCK (Balance, Equity, Interpolated Vol, SELL, BUY, Close, Menu) -->
+    <footer id="bottomExecutionDock">
+      <!-- Left: Balance & Equity -->
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;" class="font-mono">
+        <div style="line-height:1.15;">
+          <span style="display:block; font-size:9px; color:#64748B; text-transform:uppercase;">Balance</span>
+          <strong id="hudBalanceDisplay" style="font-size:12px; color:#F8FAFC;">$20,450.00</strong>
         </div>
-
-        <button id="btnCloseDrawer" style="background:#1E293B; color:#CBD5E1; border:0; padding:6px 12px; border-radius:8px; font-size:11px;">
-          Đóng bảng ẩn ▼
+        <div style="line-height:1.15;">
+          <span style="display:block; font-size:9px; color:#64748B; text-transform:uppercase;">Equity</span>
+          <strong id="hudEquityDisplay" class="text-bull-dynamic" style="font-size:12px;">$20,654.00</strong>
+        </div>
+        <button id="btnVolQuickOpen" style="background:#111621; border:1px solid #1E293B; border-radius:7px; padding:4px 9px; display:flex; align-items:center; gap:4px; cursor:pointer;" title="Nhấn để mở Bảng Vốn & Nội suy Volume">
+          <span style="font-size:10px; color:#8B949E;">Vol:</span>
+          <strong id="hudInterpolatedVol" class="font-mono" style="font-size:13px; color:#FFFFFF;">1.23</strong>
+          <span style="font-size:9px; color:#64748B;">Lot</span>
         </button>
       </div>
 
-      <!-- Drawer Scrollable Content -->
-      <div style="flex:1; overflow-y:auto; padding:16px;">
-        
-        <!-- TAB 1: CAPITAL MATRIX & VOLUME INTERPOLATION -->
+      <!-- Right: SELL / BUY / Close / Menu -->
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button id="btnSellExec" class="btn-bear-dynamic font-mono" style="border:0; padding:8px 16px; border-radius:8px; font-weight:800; font-size:13px; cursor:pointer;">
+          SELL
+        </button>
+        <button id="btnBuyExec" class="btn-bull-dynamic font-mono" style="border:0; padding:8px 16px; border-radius:8px; font-weight:800; font-size:13px; cursor:pointer;">
+          BUY
+        </button>
+        <button id="btnCloseAllExec" class="font-mono" style="background:#161C28; color:#E2E8F0; border:1px solid #263042; padding:8px 11px; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer;">
+          Close (<span id="openCountBadge">1</span>)
+        </button>
+        <button id="btnToggleDrawer" class="font-mono" style="background:#161C28; color:#38BDF8; border:1px solid #263042; padding:8px 11px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+          ☰
+        </button>
+      </div>
+    </footer>
+
+    <!-- SLIDE-UP HIDDEN CONFIGURATION SHEET (All Secondary Tools, Capital Matrix, Positions, Colors, Login, Swift Code) -->
+    <div id="bottomSheetDrawer" class="glass-drawer" style="position:fixed; inset-inline:0; bottom:0; height:86dvh; z-index:50; transform:translateY(105%); transition:transform 0.28s cubic-bezier(0.16,1,0.3,1); display:flex; flex-direction:column; border-radius:20px 20px 0 0; padding-bottom:var(--sab);">
+
+      <!-- Sheet Header Tabs -->
+      <div style="padding:10px 14px 8px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+        <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+          <button data-tab="tabMatrix" id="btnTabMatrix" style="background:#38BDF8; color:#02080D; border:0; padding:6px 11px; border-radius:7px; font-size:11px; font-weight:700;">
+            1. Bảng Vốn &amp; TP/SL
+          </button>
+          <button data-tab="tabPositions" id="btnTabPositions" style="background:transparent; color:#94A3B8; border:0; padding:6px 11px; border-radius:7px; font-size:11px; font-weight:600;">
+            2. Vị Thế (<span id="drawerPosCount">1</span>)
+          </button>
+          <button data-tab="tabAppearance" id="btnTabAppearance" style="background:transparent; color:#94A3B8; border:0; padding:6px 11px; border-radius:7px; font-size:11px; font-weight:600;">
+            3. Cặp Tiền &amp; Màu Nến
+          </button>
+          <button data-tab="tabApi" id="btnTabApi" style="background:rgba(16,185,129,0.15); color:#6EE7B7; border:1px solid rgba(16,185,129,0.35); padding:6px 11px; border-radius:7px; font-size:11px; font-weight:700;">
+            4. 🔑 Đăng nhập IC Markets
+          </button>
+          <button id="btnOpenSwiftModal" style="background:rgba(245,158,11,0.15); color:#FBBF24; border:1px solid rgba(245,158,11,0.35); padding:6px 10px; border-radius:7px; font-size:11px; font-weight:600;">
+            &lt;/&gt; Swift Code
+          </button>
+        </div>
+
+        <button id="btnCloseDrawer" style="background:#1E293B; color:#E2E8F0; border:0; padding:6px 12px; border-radius:7px; font-size:11px; font-weight:600;">
+          Đóng ✕
+        </button>
+      </div>
+
+      <!-- Sheet Content Area -->
+      <div style="flex:1; overflow-y:auto; padding:14px;">
+
+        <!-- TAB 1: CAPITAL-TO-VOLUME & TP/SL INTERPOLATION MATRIX -->
         <div id="tabMatrix" class="drawer-tab-pane" style="display:flex; flex-direction:column; gap:12px;">
-          <div style="background:rgba(15,23,42,0.8); border:1px solid #1E293B; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
-              <span>Vốn gốc (Balance): <strong id="simEquityLabel" style="color:#38BDF8;" class="font-mono">$20,450</strong></span>
-              <span id="matrixStatusOverlay" style="color:#38BDF8; font-size:11px;" class="font-mono">Nội suy: 1.23 Lots</span>
+          <div style="background:#0D121B; border:1px solid #1E293B; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; font-size:12px;">
+              <span>Giả lập Vốn (Balance): <strong id="simEquityLabel" style="color:#38BDF8;" class="font-mono">$20,450</strong></span>
+              <span id="matrixStatusOverlay" style="color:#38BDF8; font-size:11px;" class="font-mono">Nội suy: 1.23 Lots | SL: <strong id="hudSlPips">32.5</strong>p (<span id="hudSlUsd">-$400</span>) | TP: <strong id="hudTpPips">65.0</strong>p (<span id="hudTpUsd">+$800</span>)</span>
             </div>
             <input id="simEquitySlider" type="range" min="1000" max="100000" step="250" value="20450" style="width:100%;" />
-            
+
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:11px; padding-top:4px;">
+              <div style="display:flex; align-items:center; gap:4px;">
+                <span style="color:#94A3B8;">Chế độ Lot:</span>
+                <button id="btnVolModeAuto" style="background:#38BDF8; color:#02080D; border:0; padding:3px 8px; border-radius:5px; font-weight:700;">Bảng Vốn</button>
+                <button id="btnVolModeRisk05" style="background:#161F2E; color:#94A3B8; border:0; padding:3px 7px; border-radius:5px;" class="font-mono">0.5%</button>
+                <button id="btnVolModeRisk10" style="background:#161F2E; color:#94A3B8; border:0; padding:3px 7px; border-radius:5px;" class="font-mono">1.0%</button>
+                <button id="btnVolModeRisk20" style="background:#161F2E; color:#94A3B8; border:0; padding:3px 7px; border-radius:5px;" class="font-mono">2.0%</button>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:6px;" class="font-mono">
+                <span style="color:#94A3B8;">Chỉnh tay:</span>
+                <button id="btnLotMinus" style="background:#1E293B; color:#fff; border:0; width:24px; height:24px; border-radius:5px; font-weight:700;">-</button>
+                <input id="inputLotSize" type="number" step="0.01" min="0.01" max="100" value="1.23" style="width:56px; background:#06090E; color:#38BDF8; border:1px solid #334155; text-align:center; padding:3px; border-radius:5px; font-weight:700;" />
+                <button id="btnLotPlus" style="background:#1E293B; color:#fff; border:0; width:24px; height:24px; border-radius:5px; font-weight:700;">+</button>
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:11px; padding-top:2px;">
               <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
                 <input type="checkbox" id="chkLinearInterp" checked />
                 <span>Nội suy tuyến tính Volume giữa các bậc vốn</span>
@@ -272,10 +325,17 @@
                 <input type="checkbox" id="chkInterpolateSl" checked />
                 <span>Nội suy khoảng cách TP/SL theo Volume (Khóa trần lỗ $)</span>
               </label>
+              <div style="display:flex; align-items:center; gap:4px;">
+                <span style="color:#94A3B8;">Tỷ lệ R:R:</span>
+                <select id="rrRatioSelect" style="background:#161F2E; color:#fff; border:1px solid #334155; padding:2px 6px; border-radius:5px;" class="font-mono">
+                  <option value="1.5">1 : 1.5</option>
+                  <option value="2.0" selected>1 : 2.0</option>
+                  <option value="3.0">1 : 3.0</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <!-- Matrix Table -->
           <div style="overflow-x:auto; border:1px solid #1E293B; border-radius:12px;">
             <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left;" class="font-mono">
               <thead>
@@ -285,15 +345,15 @@
                   <th style="padding:8px 10px;">Rủi ro ($/lệnh)</th>
                   <th style="padding:8px 10px;">SL (pips)</th>
                   <th style="padding:8px 10px;">TP (pips)</th>
-                  <th style="padding:8px 10px; text-align:right;">Thao tác</th>
+                  <th style="padding:8px 10px; text-align:right;">Xóa</th>
                 </tr>
               </thead>
-              <tbody id="matrixTableBody" style="background:#090D14;"></tbody>
+              <tbody id="matrixTableBody" style="background:#070A0F;"></tbody>
             </table>
           </div>
 
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <button id="btnAddMatrixTier" style="background:rgba(56,189,248,0.2); color:#38BDF8; border:1px solid rgba(56,189,248,0.4); padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600;">
+            <button id="btnAddMatrixTier" style="background:rgba(56,189,248,0.18); color:#38BDF8; border:1px solid rgba(56,189,248,0.35); padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600;">
               + Thêm Bậc Vốn Mới
             </button>
             <span id="formulaExplanation" style="color:#64748B; font-size:10px;" class="font-mono">
@@ -302,15 +362,15 @@
           </div>
         </div>
 
-        <!-- TAB 2: ACTIVE POSITIONS -->
+        <!-- TAB 2: OPEN POSITIONS -->
         <div id="tabPositions" class="drawer-tab-pane hidden" style="display:flex; flex-direction:column; gap:10px;">
-          <div style="background:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; font-size:12px;" class="font-mono">
+          <div style="background:#0D121B; border:1px solid #1E293B; border-radius:12px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; font-size:12px;" class="font-mono">
             <span>Floating PnL: <strong id="hudOpenPnl" class="text-bull-dynamic">+$204.00</strong></span>
             <div style="display:flex; align-items:center; gap:6px;">
-              <span style="color:#64748B; font-size:11px;">Loại lệnh:</span>
-              <select id="orderTypeSelect" style="background:#090D14; color:#F8FAFC; border:1px solid #334155; padding:4px 8px; border-radius:6px; font-size:11px;" class="font-mono">
-                <option value="MARKET">MARKET</option>
-                <option value="LIMIT">LIMIT (@Entry)</option>
+              <span style="color:#94A3B8; font-size:11px;">Loại lệnh:</span>
+              <select id="orderTypeSelect" style="background:#070A0F; color:#fff; border:1px solid #334155; padding:4px 8px; border-radius:6px; font-size:11px;" class="font-mono">
+                <option value="MARKET">MARKET (Khớp ngay)</option>
+                <option value="LIMIT">LIMIT (Đặt tại đường Entry)</option>
               </select>
             </div>
           </div>
@@ -324,30 +384,38 @@
                   <th style="padding:8px 10px;">Giá Vào</th>
                   <th style="padding:8px 10px;">SL / TP</th>
                   <th style="padding:8px 10px;">PnL ($)</th>
-                  <th style="padding:8px 10px; text-align:right;">Hành động</th>
+                  <th style="padding:8px 10px; text-align:right;">Thao tác</th>
                 </tr>
               </thead>
-              <tbody id="positionsTableBody" style="background:#090D14;"></tbody>
+              <tbody id="positionsTableBody" style="background:#070A0F;"></tbody>
             </table>
           </div>
         </div>
 
-        <!-- TAB 3: SYMBOL & CANDLE COLORS -->
+        <!-- TAB 3: SYMBOL & CANDLE COLOR CUSTOMIZER -->
         <div id="tabAppearance" class="drawer-tab-pane hidden" style="display:flex; flex-direction:column; gap:12px; font-size:12px;">
-          <div style="background:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:10px;">
+          <div style="background:#0D121B; border:1px solid #1E293B; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:10px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="color:#94A3B8;">Cặp giao dịch:</span>
-              <select id="symbolSelect" style="background:#090D14; color:#F8FAFC; border:1px solid #334155; padding:4px 10px; border-radius:6px; font-weight:700;">
-                <option value="XAUUSD">XAUUSD (Gold Raw)</option>
-                <option value="EURUSD">EURUSD (Raw ECN)</option>
-                <option value="GBPUSD">GBPUSD (Raw ECN)</option>
-                <option value="US30">US30 (Wall St 30)</option>
-                <option value="BTCUSD">BTCUSD (Crypto CFD)</option>
+              <span style="color:#94A3B8;">Chọn Cặp Giao Dịch (IC Markets):</span>
+              <select id="symbolSelect" style="background:#070A0F; color:#fff; border:1px solid #334155; padding:5px 10px; border-radius:6px; font-weight:700;">
+                <option value="XAUUSD">XAUUSD — Gold vs US Dollar</option>
+                <option value="EURUSD">EURUSD — Euro vs US Dollar</option>
+                <option value="GBPUSD">GBPUSD — Great Britain Pound vs USD</option>
+                <option value="US30">US30 — Wall Street 30 Index</option>
+                <option value="BTCUSD">BTCUSD — Bitcoin vs US Dollar</option>
               </select>
             </div>
 
+            <div style="display:flex; justify-content:space-between; align-items:center;" class="font-mono">
+              <span style="color:#94A3B8;">Giá Bid / Spread hiện tại:</span>
+              <div>
+                <strong id="livePriceDisplay" class="text-bull-dynamic">2642.50</strong>
+                <span id="liveSpreadBadge" style="margin-left:6px; font-size:10px; padding:2px 6px; background:#1E293B; border-radius:4px; color:#CBD5E1;">Spread: 1.2p</span>
+              </div>
+            </div>
+
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="color:#94A3B8;">Nến Tăng &amp; Nút BUY:</span>
+              <span style="color:#94A3B8;">Màu Nến Tăng &amp; Nút BUY:</span>
               <div style="display:flex; align-items:center; gap:8px;">
                 <input type="color" id="inputBullColor" value="#38BDF8" style="background:transparent; border:0; width:30px; height:26px; cursor:pointer;" />
                 <span id="labelBullHex" class="font-mono" style="color:#38BDF8;">#38BDF8</span>
@@ -355,7 +423,7 @@
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="color:#94A3B8;">Nến Giảm &amp; Nút SELL:</span>
+              <span style="color:#94A3B8;">Màu Nến Giảm &amp; Nút SELL:</span>
               <div style="display:flex; align-items:center; gap:8px;">
                 <input type="color" id="inputBearColor" value="#991B1B" style="background:transparent; border:0; width:30px; height:26px; cursor:pointer;" />
                 <span id="labelBearHex" class="font-mono" style="color:#EF4444;">#991B1B</span>
@@ -363,144 +431,144 @@
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center; padding-top:4px;">
-              <button id="btnToggleLines" style="background:rgba(56,189,248,0.2); color:#38BDF8; border:1px solid rgba(56,189,248,0.4); padding:4px 10px; border-radius:6px; font-size:11px;" class="font-mono">
-                Đường TP/SL: BẬT
-              </button>
-              <button id="btnResetColors" style="background:#1E293B; color:#CBD5E1; border:0; padding:4px 10px; border-radius:6px; font-size:11px;">
-                Đặt lại màu chuẩn
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="chkShowEma" />
+                <span>Hiện chỉ báo EMA 20 &amp; EMA 50</span>
+              </label>
+              <button id="btnResetColors" style="background:#1E293B; color:#CBD5E1; border:0; padding:5px 10px; border-radius:6px; font-size:11px;">
+                Khôi phục màu chuẩn (#38BDF8 / #991B1B)
               </button>
             </div>
           </div>
         </div>
 
-        <!-- TAB 4: REAL IC MARKETS LOGIN -->
-        <div id="tabApi" class="drawer-tab-pane hidden" style="display:flex; flex-direction:column; gap:12px; font-size:12px;">
-          
-          <div style="background:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <!-- TAB 4: REAL IC MARKETS LOGIN (cTrader Open API + MT4 MetaApi) -->
+        <div id="tabApi" class="drawer-tab-pane hidden" style="display:flex; flex-direction:column; gap:10px; font-size:12px;">
+          <div style="background:#0D121B; border:1px solid #1E293B; border-radius:12px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
             <div style="display:flex; align-items:center; gap:6px;">
-              <span style="color:#94A3B8;">Giao thức:</span>
-              <button id="btnApiCtrader" style="background:#38BDF8; color:#030D14; border:0; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700;">
-                cTrader Open API
+              <span style="color:#94A3B8;">Loại tài khoản:</span>
+              <button id="btnApiCtrader" style="background:#38BDF8; color:#02080D; border:0; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700;">
+                1. cTrader Open API
               </button>
               <button id="btnApiMt4" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:4px 10px; border-radius:6px; font-size:11px;">
-                MT4 MetaApi
+                2. MT4 / MT5 (MetaApi)
               </button>
             </div>
-            <span id="liveConnStateLabel" class="font-mono" style="background:rgba(245,158,11,0.2); color:#FBBF24; border:1px solid rgba(245,158,11,0.3); padding:3px 8px; border-radius:6px; font-size:11px;">
-              ● Đang chạy Giả lập (SIM)
-            </span>
+
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span id="liveConnStateLabel" class="font-mono" style="background:rgba(245,158,11,0.18); color:#FBBF24; padding:3px 8px; border-radius:6px; font-size:10px;">
+                ● Chế độ Giả lập (SIM)
+              </span>
+              <button id="btnDisconnectLive" class="hidden font-mono" style="background:rgba(244,63,94,0.2); color:#FDA4AF; border:1px solid rgba(244,63,94,0.4); padding:3px 8px; border-radius:6px; font-size:10px;">
+                Ngắt kết nối
+              </button>
+            </div>
           </div>
 
-          <!-- cTrader Login Box -->
-          <div id="formCtraderPanel" style="background:#0F172A; border:1px solid rgba(56,189,248,0.4); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px;">
+          <!-- cTrader Form -->
+          <div id="formCtraderPanel" style="background:#0D121B; border:1px solid rgba(56,189,248,0.35); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <strong style="color:#38BDF8;">Đăng nhập cTrader Open API</strong>
-              <select id="ctraderEnvSelect" style="background:#090D14; color:#38BDF8; border:1px solid #334155; padding:3px 8px; border-radius:6px; font-size:11px;" class="font-mono">
-                <option value="wss://demo.ctraderapi.com:5036">DEMO (:5036)</option>
-                <option value="wss://live.ctraderapi.com:5036">LIVE (:5036)</option>
+              <strong style="color:#38BDF8;">IC Markets cTrader Open API</strong>
+              <select id="ctraderEnvSelect" style="background:#070A0F; color:#38BDF8; border:1px solid #334155; padding:3px 8px; border-radius:6px; font-size:11px;" class="font-mono">
+                <option value="wss://demo.ctraderapi.com:5036">DEMO (wss://demo.ctraderapi.com:5036)</option>
+                <option value="wss://live.ctraderapi.com:5036">LIVE (wss://live.ctraderapi.com:5036)</option>
               </select>
             </div>
-
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px;">
-              <div>
-                <label style="display:block; font-size:10px; color:#64748B; margin-bottom:2px;">App Client ID</label>
-                <input id="inpCtraderClientId" type="text" placeholder="Client ID từ openapi.ctrader.com..." style="width:100%; background:#090D14; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
-              </div>
-              <div>
-                <label style="display:block; font-size:10px; color:#64748B; margin-bottom:2px;">App Client Secret</label>
-                <input id="inpCtraderSecret" type="password" placeholder="Client Secret..." style="width:100%; background:#090D14; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
-              </div>
-              <div>
-                <label style="display:block; font-size:10px; color:#64748B; margin-bottom:2px;">Access Token</label>
-                <input id="inpCtraderToken" type="password" placeholder="OAuth Access Token..." style="width:100%; background:#090D14; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
-              </div>
-              <div>
-                <label style="display:block; font-size:10px; color:#64748B; margin-bottom:2px;">cTrader Account ID</label>
-                <input id="inpCtraderAccountId" type="number" placeholder="VD: 4092817..." style="width:100%; background:#090D14; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
-              </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:8px;">
+              <input id="inpCtraderClientId" type="text" placeholder="App Client ID..." style="background:#070A0F; color:#fff; border:1px solid #334155; padding:6px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
+              <input id="inpCtraderSecret" type="password" placeholder="App Client Secret..." style="background:#070A0F; color:#fff; border:1px solid #334155; padding:6px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
+              <input id="inpCtraderToken" type="password" placeholder="OAuth Access Token..." style="background:#070A0F; color:#fff; border:1px solid #334155; padding:6px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
+              <input id="inpCtraderAccountId" type="number" placeholder="cTrader Account ID (VD: 4092817)..." style="background:#070A0F; color:#fff; border:1px solid #334155; padding:6px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
             </div>
-
-            <div style="display:flex; justify-content:flex-end; padding-top:4px;">
-              <button id="btnConnectCtraderLive" style="background:#38BDF8; color:#030D14; border:0; padding:7px 16px; border-radius:8px; font-size:12px; font-weight:700;">
+            <div style="display:flex; justify-content:flex-end;">
+              <button id="btnConnectCtraderLive" style="background:#38BDF8; color:#02080D; border:0; padding:7px 14px; border-radius:7px; font-size:11px; font-weight:700;">
                 Kết nối cTrader Thật
               </button>
             </div>
           </div>
 
-          <!-- MT4 MetaApi Login Box -->
-          <div id="formMt4Panel" style="display:none; background:#0F172A; border:1px solid rgba(245,158,11,0.4); border-radius:12px; padding:14px; flex-direction:column; gap:8px;">
+          <!-- MT4 Form -->
+          <div id="formMt4Panel" style="display:none; background:#0D121B; border:1px solid rgba(245,158,11,0.35); border-radius:12px; padding:12px; flex-direction:column; gap:8px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <strong style="color:#FBBF24;">Đăng nhập IC Markets MT4 (MetaApi)</strong>
-              <select id="mt4RegionSelect" style="background:#090D14; color:#FBBF24; border:1px solid #334155; padding:3px 8px; border-radius:6px; font-size:11px;" class="font-mono">
+              <strong style="color:#FBBF24;">IC Markets MT4 / MT5 (Qua MetaApi Cloud)</strong>
+              <select id="mt4RegionSelect" style="background:#070A0F; color:#FBBF24; border:1px solid #334155; padding:3px 8px; border-radius:6px; font-size:11px;" class="font-mono">
                 <option value="https://mt-client-api-v1.singapore.agiliumtrade.ai">Singapore</option>
                 <option value="https://mt-client-api-v1.london.agiliumtrade.ai">London</option>
+                <option value="https://mt-client-api-v1.new-york.agiliumtrade.ai">New York</option>
               </select>
             </div>
-
-            <div>
-              <label style="display:block; font-size:10px; color:#64748B; margin-bottom:2px;">MetaApi Access Token</label>
-              <input id="inpMt4Token" type="password" placeholder="JWT Token từ app.metaapi.cloud..." style="width:100%; background:#090D14; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
-            </div>
-            <div>
-              <label style="display:block; font-size:10px; color:#64748B; margin-bottom:2px;">MetaApi MT4 Account ID</label>
-              <input id="inpMt4AccountId" type="text" placeholder="UUID tài khoản MT4..." style="width:100%; background:#090D14; color:#fff; border:1px solid #334155; padding:5px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
-            </div>
-
-            <div style="display:flex; justify-content:flex-end; padding-top:4px;">
-              <button id="btnConnectMt4Live" style="background:#FBBF24; color:#030D14; border:0; padding:7px 16px; border-radius:8px; font-size:12px; font-weight:700;">
+            <input id="inpMt4Token" type="password" placeholder="MetaApi Access Token (lấy tại app.metaapi.cloud)..." style="background:#070A0F; color:#fff; border:1px solid #334155; padding:6px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
+            <input id="inpMt4AccountId" type="text" placeholder="MetaApi MT4 Account ID (UUID)..." style="background:#070A0F; color:#fff; border:1px solid #334155; padding:6px 8px; border-radius:6px; font-size:11px;" class="font-mono" />
+            <div style="display:flex; justify-content:flex-end;">
+              <button id="btnConnectMt4Live" style="background:#FBBF24; color:#02080D; border:0; padding:7px 14px; border-radius:7px; font-size:11px; font-weight:700;">
                 Kết nối MT4 Thật
               </button>
             </div>
           </div>
 
           <!-- Log Console -->
-          <div style="background:#06080C; border:1px solid #1E293B; border-radius:10px; padding:8px 12px; font-size:10px;" class="font-mono">
+          <div style="background:#040609; border:1px solid #1E293B; border-radius:10px; padding:8px 10px; font-size:10px;" class="font-mono">
             <div style="color:#64748B; margin-bottom:4px; display:flex; justify-content:space-between;">
               <span>Nhật ký kết nối sàn:</span>
               <button id="btnClearApiLog" style="background:transparent; border:0; color:#64748B; cursor:pointer;">Xóa log</button>
             </div>
-            <div id="apiConsoleLog" style="height:70px; overflow-y:auto; color:#38BDF8;">
-              <div>[Hệ thống] Đang chạy chế độ Giả lập. Nhập thông số cTrader hoặc MT4 để bắt đầu trade tài khoản thật.</div>
+            <div id="apiConsoleLog" style="height:64px; overflow-y:auto; color:#38BDF8;">
+              <div>[Hệ thống] Giao diện tràn viền chuẩn MT5. Tự động xoay ngang/dọc theo cảm biến của iPhone Duo.</div>
             </div>
           </div>
-
         </div>
 
       </div>
+    </div>
 
+    <!-- MODAL: SWIFTUI SOURCE CODE VIEWER -->
+    <div id="swiftCodeModal" class="hidden" style="position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; padding:12px;">
+      <div style="background:#0D1118; border:1px solid #1E293B; border-radius:16px; width:100%; max-width:920px; height:82dvh; display:flex; flex-direction:column; overflow:hidden;">
+        <div style="padding:10px 14px; border-bottom:1px solid #1E293B; display:flex; justify-content:space-between; align-items:center;">
+          <strong style="font-size:13px; color:#fff;">Mã nguồn iOS Native (SwiftUI + LightweightChartsIOS + IC Markets API)</strong>
+          <div style="display:flex; gap:6px;">
+            <button id="btnCopySwiftCode" style="background:#38BDF8; color:#02080D; border:0; padding:5px 10px; border-radius:6px; font-size:11px; font-weight:700;">Sao chép Swift Code</button>
+            <button id="btnCloseSwiftModal" style="background:#1E293B; color:#CBD5E1; border:0; padding:5px 10px; border-radius:6px; font-size:11px;">Đóng ✕</button>
+          </div>
+        </div>
+        <div style="padding:6px 14px; background:#06080C; border-bottom:1px solid #1E293B; display:flex; gap:6px;" class="font-mono">
+          <button data-swift="fileRiskEngine" class="swift-file-btn" style="background:rgba(56,189,248,0.2); color:#38BDF8; border:1px solid rgba(56,189,248,0.4); padding:4px 8px; border-radius:5px; font-size:11px;">1. RiskAndVolumeEngine.swift</button>
+          <button data-swift="fileCTraderService" class="swift-file-btn" style="background:transparent; color:#94A3B8; border:0; padding:4px 8px; border-radius:5px; font-size:11px;">2. ICMarketsService.swift</button>
+          <button data-swift="fileDuoViews" class="swift-file-btn" style="background:transparent; color:#94A3B8; border:0; padding:4px 8px; border-radius:5px; font-size:11px;">3. DuoTradingView.swift</button>
+        </div>
+        <pre id="swiftCodeDisplay" class="font-mono" style="flex:1; overflow:auto; padding:14px; margin:0; font-size:11px; line-height:1.5; color:#38BDF8; background:#040609; user-select:all; -webkit-user-select:all;"></pre>
+      </div>
     </div>
 
   </div>
 
   <script>
     // =========================================================================
-    // 1. STATE & INSTRUMENT SPECIFICATIONS
+    // 1. INSTRUMENT SPECS & APPLICATION STATE
     // =========================================================================
     const INSTRUMENTS = {
-      XAUUSD: { name: 'XAUUSD', symbolId: 41, basePrice: 2642.50, pipSize: 0.10, pipValuePerLot: 10.0, spreadPips: 1.2, digits: 2 },
-      EURUSD: { name: 'EURUSD', symbolId: 1,  basePrice: 1.0845,  pipSize: 0.0001, pipValuePerLot: 10.0, spreadPips: 0.1, digits: 4 },
-      GBPUSD: { name: 'GBPUSD', symbolId: 2,  basePrice: 1.2960,  pipSize: 0.0001, pipValuePerLot: 10.0, spreadPips: 0.3, digits: 4 },
-      US30:   { name: 'US30',   symbolId: 101, basePrice: 43850.0, pipSize: 1.0,    pipValuePerLot: 1.0,  spreadPips: 1.5, digits: 1 },
-      BTCUSD: { name: 'BTCUSD', symbolId: 201, basePrice: 88420.0, pipSize: 1.0,    pipValuePerLot: 1.0,  spreadPips: 12.0, digits: 1 }
+      XAUUSD: { name: 'XAUUSD', desc: 'Gold vs US Dollar', symbolId: 41, basePrice: 2642.50, pipSize: 0.10, pipValuePerLot: 10.0, spreadPips: 1.2, digits: 2 },
+      EURUSD: { name: 'EURUSD', desc: 'Euro vs US Dollar', symbolId: 1,  basePrice: 1.0845,  pipSize: 0.0001, pipValuePerLot: 10.0, spreadPips: 0.1, digits: 4 },
+      GBPUSD: { name: 'GBPUSD', desc: 'Great Britain Pound vs US Dollar', symbolId: 2,  basePrice: 1.2960,  pipSize: 0.0001, pipValuePerLot: 10.0, spreadPips: 0.3, digits: 4 },
+      US30:   { name: 'US30',   desc: 'Wall Street 30 Index', symbolId: 101, basePrice: 43850.0, pipSize: 1.0,    pipValuePerLot: 1.0,  spreadPips: 1.5, digits: 1 },
+      BTCUSD: { name: 'BTCUSD', desc: 'Bitcoin vs US Dollar', symbolId: 201, basePrice: 88420.0, pipSize: 1.0,    pipValuePerLot: 1.0,  spreadPips: 12.0, digits: 1 }
     };
 
     const state = {
-      isStandalonePWA: window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches,
-      deviceFoldState: 'UNFOLDED', // 'FOLDED' (5.4") or 'UNFOLDED' (7.6")
-      orientation: 'LANDSCAPE',    // 'LANDSCAPE' or 'PORTRAIT'
       executionMode: 'SIM',        // 'SIM' | 'LIVE_CTRADER' | 'LIVE_MT4'
       apiRoute: 'CTRADER',
       symbol: 'XAUUSD',
       timeframe: 'M15',
       balance: 20450.00,
       equity: 20654.00,
-      lotSize: 1.23,
       volMode: 'AUTO_MATRIX',
       linearInterpolation: true,
       interpolateSlByVol: true,
       rrRatio: 2.0,
-      orderType: 'MARKET',
+      lotSize: 1.23,
       showOverlayLines: true,
+      showEma: false,
+      orderType: 'MARKET',
 
       bullColor: '#38BDF8',
       bearColor: '#991B1B',
@@ -540,86 +608,22 @@
       candles: []
     };
 
-    function logApiMessage(msg, isErr = false) {
+    function logApiMessage(msg, isError = false) {
       const box = document.getElementById('apiConsoleLog');
       if (!box) return;
       const d = document.createElement('div');
-      d.style.color = isErr ? '#F87171' : '#38BDF8';
+      d.style.color = isError ? '#F87171' : '#38BDF8';
       d.textContent = `[${new Date().toLocaleTimeString('vi-VN')}] ${msg}`;
       box.prepend(d);
     }
 
     // =========================================================================
-    // 2. AUTOMATIC HARDWARE SCREEN ROTATION & FOLD DETECTION
-    // =========================================================================
-    function detectRealScreenAndLayout() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const isLandscape = w > h;
-      state.orientation = isLandscape ? 'LANDSCAPE' : 'PORTRAIT';
-
-      // iPhone Duo screen classification:
-      // Inner unfolded screen: min dimension ~ 640px+, aspect ratio 1.41:1
-      // Outer folded screen: min dimension < 520px
-      const minDim = Math.min(w, h);
-      const isFolded = minDim < 540;
-      state.deviceFoldState = isFolded ? 'FOLDED' : 'UNFOLDED';
-
-      const badge = document.getElementById('screenDetectBadge');
-      const crease = document.getElementById('hardwareHingeCrease');
-
-      if (badge) {
-        badge.textContent = `${state.deviceFoldState === 'UNFOLDED' ? 'Mở 7.6"' : 'Gập 5.4"'} • ${isLandscape ? 'Ngang' : 'Dọc'} (${w}×${h}px)`;
-      }
-
-      // Automatically show/hide & rotate center crease for unfolded 7.6" screen
-      if (state.deviceFoldState === 'UNFOLDED') {
-        crease.style.display = 'block';
-        if (isLandscape) {
-          crease.className = 'crease-v';
-        } else {
-          crease.className = 'crease-h';
-        }
-      } else {
-        crease.style.display = 'none';
-      }
-
-      // Hide simulator desktop bar if in Standalone Fullscreen PWA
-      const topBar = document.getElementById('desktopSimToolbar');
-      if (topBar) {
-        if (state.isStandalonePWA) {
-          topBar.style.display = 'none';
-        } else {
-          topBar.style.display = 'flex';
-        }
-      }
-
-      resizeAndDrawChart();
-    }
-
-    // Listen to device rotation and viewport resize
-    window.addEventListener('resize', detectRealScreenAndLayout);
-    window.addEventListener('orientationchange', () => {
-      setTimeout(detectRealScreenAndLayout, 200);
-    });
-
-    // Force simulation buttons on desktop
-    document.getElementById('btnForceUnfolded').addEventListener('click', () => {
-      state.deviceFoldState = 'UNFOLDED';
-      detectRealScreenAndLayout();
-    });
-    document.getElementById('btnForceFolded').addEventListener('click', () => {
-      state.deviceFoldState = 'FOLDED';
-      detectRealScreenAndLayout();
-    });
-
-    // =========================================================================
-    // 3. VOLUME & TP/SL INTERPOLATION ENGINE
+    // 2. VOLUME & TP/SL INTERPOLATION ENGINE
     // =========================================================================
     function computeInterpolatedParameters() {
       const inst = INSTRUMENTS[state.symbol];
       const sorted = [...state.capitalMatrix].sort((a, b) => a.equity - b.equity);
-      if (sorted.length === 0) return;
+      if (!sorted.length) return;
 
       const E = state.equity;
       let targetLots = sorted[0].lots;
@@ -637,14 +641,13 @@
         presetSlPips = last.slPips;
       } else {
         for (let i = 0; i < sorted.length - 1; i++) {
-          const t1 = sorted[i];
-          const t2 = sorted[i + 1];
+          const t1 = sorted[i], t2 = sorted[i + 1];
           if (E >= t1.equity && E <= t2.equity) {
             if (state.linearInterpolation) {
-              const ratio = (E - t1.equity) / Math.max(1, (t2.equity - t1.equity));
-              targetLots = t1.lots + ratio * (t2.lots - t1.lots);
-              targetRiskUsd = t1.maxRiskUsd + ratio * (t2.maxRiskUsd - t1.maxRiskUsd);
-              presetSlPips = t1.slPips + ratio * (t2.slPips - t1.slPips);
+              const r = (E - t1.equity) / Math.max(1, (t2.equity - t1.equity));
+              targetLots = t1.lots + r * (t2.lots - t1.lots);
+              targetRiskUsd = t1.maxRiskUsd + r * (t2.maxRiskUsd - t1.maxRiskUsd);
+              presetSlPips = t1.slPips + r * (t2.slPips - t1.slPips);
             } else {
               targetLots = t1.lots;
               targetRiskUsd = t1.maxRiskUsd;
@@ -655,33 +658,56 @@
         }
       }
 
-      state.lotSize = Math.max(0.01, Math.round(targetLots * 100) / 100);
-
-      let slPips = presetSlPips;
-      if (state.interpolateSlByVol) {
-        slPips = targetRiskUsd / Math.max(0.01, state.lotSize * inst.pipValuePerLot);
+      if (state.volMode === 'AUTO_MATRIX') {
+        state.lotSize = Math.max(0.01, Math.round(targetLots * 100) / 100);
+      } else if (state.volMode.startsWith('RISK_')) {
+        const pct = state.volMode === 'RISK_05' ? 0.005 : (state.volMode === 'RISK_10' ? 0.01 : 0.02);
+        targetRiskUsd = E * pct;
+        const currentSlPips = Math.max(2, Math.abs(state.entryLinePrice - state.slLinePrice) / inst.pipSize);
+        state.lotSize = Math.max(0.01, Math.round((targetRiskUsd / (currentSlPips * inst.pipValuePerLot)) * 100) / 100);
       }
+
+      let slPips = state.interpolateSlByVol
+        ? targetRiskUsd / Math.max(0.01, state.lotSize * inst.pipValuePerLot)
+        : presetSlPips;
       slPips = Math.max(3, Math.min(300, slPips));
       const tpPips = slPips * state.rrRatio;
 
-      const isShortSetup = state.slLinePrice > state.entryLinePrice;
-      const dir = isShortSetup ? -1 : 1;
+      const isShort = state.slLinePrice > state.entryLinePrice;
+      const dir = isShort ? -1 : 1;
       state.slLinePrice = Number((state.entryLinePrice - dir * slPips * inst.pipSize).toFixed(inst.digits));
       state.tpLinePrice = Number((state.entryLinePrice + dir * tpPips * inst.pipSize).toFixed(inst.digits));
 
+      updateHudReadouts();
+    }
+
+    function updateHudReadouts() {
+      const inst = INSTRUMENTS[state.symbol];
+      const slPips = Math.abs(state.entryLinePrice - state.slLinePrice) / inst.pipSize;
+      const tpPips = Math.abs(state.tpLinePrice - state.entryLinePrice) / inst.pipSize;
+      const slUsd = Math.round(slPips * state.lotSize * inst.pipValuePerLot);
+      const tpUsd = Math.round(tpPips * state.lotSize * inst.pipValuePerLot);
+
       document.getElementById('hudInterpolatedVol').textContent = state.lotSize.toFixed(2);
-      document.getElementById('matrixStatusOverlay').textContent = `Nội suy: ${state.lotSize.toFixed(2)} Lots (SL ${slPips.toFixed(1)}p / TP ${tpPips.toFixed(1)}p)`;
+      document.getElementById('inputLotSize').value = state.lotSize.toFixed(2);
+      document.getElementById('hudSlPips').textContent = slPips.toFixed(1);
+      document.getElementById('hudSlUsd').textContent = '-$' + slUsd;
+      document.getElementById('hudTpPips').textContent = tpPips.toFixed(1);
+      document.getElementById('hudTpUsd').textContent = '+$' + tpUsd;
     }
 
     // =========================================================================
-    // 4. CHART RENDERING & CANDLESTICK DRAWING
+    // 3. MT5-STYLE CANDLESTICK CHART & PRECISION CROSSHAIR RENDERER
     // =========================================================================
     const canvas = document.getElementById('tradingCanvas');
     const ctx = canvas.getContext('2d');
-    let chartBounds = { minPrice: 0, maxPrice: 1, padTop: 56, padBottom: 60, padRight: 72 };
+    let chartBounds = { minPrice: 0, maxPrice: 1, padTop: 22, padBottom: 22, padRight: 64 };
 
-    function generateCandlesForSymbol(symbol, count = 85) {
+    function generateCandlesForSymbol(symbol) {
       const inst = INSTRUMENTS[symbol];
+      const w = window.innerWidth;
+      // Dynamically adjust number of visible candles based on width (Folded vs Unfolded / Portrait vs Landscape)
+      const count = w > 700 ? 95 : 58;
       const candles = [];
       let price = inst.basePrice - inst.pipSize * 40;
       const now = Math.floor(Date.now() / 1000);
@@ -694,19 +720,23 @@
         const close = Number((open + delta).toFixed(inst.digits));
         const high = Number((Math.max(open, close) + Math.random() * volatility * 0.65).toFixed(inst.digits));
         const low = Number((Math.min(open, close) - Math.random() * volatility * 0.65).toFixed(inst.digits));
-        candles.push({ time: now - i * tfSeconds, open, high, low, close, vol: Math.floor(100 + Math.random() * 300) });
+        candles.push({ time: now - i * tfSeconds, open, high, low, close });
         price = close;
       }
+
       state.candles = candles;
-      state.entryLinePrice = candles[candles.length - 1].close;
+      const lastClose = candles[candles.length - 1].close;
+      inst.basePrice = lastClose;
+      state.entryLinePrice = lastClose;
       computeInterpolatedParameters();
     }
 
     function resizeAndDrawChart() {
       const wrapper = document.getElementById('chartWrapper');
+      if (!wrapper) return;
       const rect = wrapper.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.max(260, rect.width) * dpr;
+      canvas.width = Math.max(200, rect.width) * dpr;
       canvas.height = Math.max(200, rect.height) * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       drawChart(rect.width, rect.height);
@@ -725,6 +755,15 @@
       return chartBounds.maxPrice - ratio * (chartBounds.maxPrice - chartBounds.minPrice);
     }
 
+    function formatTimestamp(unixSec) {
+      const d = new Date(unixSec * 1000);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mo = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      return `${dd} ${mo} ${hh}:${mm}`;
+    }
+
     function drawChart(w, h) {
       ctx.clearRect(0, 0, w, h);
       const inst = INSTRUMENTS[state.symbol];
@@ -740,39 +779,63 @@
         minP = Math.min(minP, state.slLinePrice, state.tpLinePrice, state.entryLinePrice);
         maxP = Math.max(maxP, state.slLinePrice, state.tpLinePrice, state.entryLinePrice);
       }
-      const margin = (maxP - minP) * 0.10 || inst.pipSize * 20;
+      const margin = (maxP - minP) * 0.09 || inst.pipSize * 20;
       chartBounds.minPrice = minP - margin;
       chartBounds.maxPrice = maxP + margin;
 
       const plotW = w - chartBounds.padRight;
+      const stepX = plotW / candles.length;
 
-      // Price Grid
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.06)';
+      // 1. MT5-Style Dashed Grid (Horizontal & Vertical) + Right Axis & Bottom Timestamps
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.09)';
       ctx.lineWidth = 1;
-      ctx.font = '10px ui-monospace, monospace';
-      ctx.fillStyle = '#64748B';
+      ctx.setLineDash([2, 3]);
+      ctx.font = '10px ui-monospace, SFMono-Regular, monospace';
+      ctx.fillStyle = '#8B949E';
 
-      for (let i = 0; i <= 6; i++) {
-        const p = chartBounds.minPrice + (i / 6) * (chartBounds.maxPrice - chartBounds.minPrice);
+      const hSteps = Math.max(5, Math.min(10, Math.floor(h / 55)));
+      for (let i = 0; i <= hSteps; i++) {
+        const p = chartBounds.minPrice + (i / hSteps) * (chartBounds.maxPrice - chartBounds.minPrice);
         const y = priceToY(p, h);
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(plotW, y);
         ctx.stroke();
-        ctx.fillText(p.toFixed(inst.digits), plotW + 6, y + 3);
+        ctx.fillText(p.toFixed(inst.digits), plotW + 5, y + 3);
       }
 
-      // Candlesticks
-      const stepX = plotW / candles.length;
-      const candleW = Math.max(3, Math.min(13, stepX * 0.70));
+      // Vertical Grid & Bottom Timestamps
+      const vStep = Math.max(10, Math.floor(candles.length / 5));
+      for (let i = vStep; i < candles.length; i += vStep) {
+        const x = i * stepX + stepX * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(x, chartBounds.padTop);
+        ctx.lineTo(x, h - chartBounds.padBottom);
+        ctx.stroke();
+        const tLabel = formatTimestamp(candles[i].time);
+        ctx.fillText(tLabel, Math.max(4, x - 28), h - 6);
+      }
+      ctx.restore();
 
+      // Axis Border Lines
+      ctx.strokeStyle = '#1E2631';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(plotW, 0);
+      ctx.lineTo(plotW, h - chartBounds.padBottom);
+      ctx.lineTo(0, h - chartBounds.padBottom);
+      ctx.stroke();
+
+      // 2. Candlesticks (Custom Bull Light Blue & Bear Dark Red)
+      const candleW = Math.max(2.5, Math.min(11, stepX * 0.68));
       candles.forEach((c, idx) => {
         const x = idx * stepX + stepX * 0.5;
         const isBull = c.close >= c.open;
         const color = isBull ? state.bullColor : state.bearColor;
 
         ctx.strokeStyle = color;
-        ctx.lineWidth = 1.25;
+        ctx.lineWidth = 1.15;
         ctx.beginPath();
         ctx.moveTo(x, priceToY(c.high, h));
         ctx.lineTo(x, priceToY(c.low, h));
@@ -781,28 +844,79 @@
         const yOpen = priceToY(c.open, h);
         const yClose = priceToY(c.close, h);
         ctx.fillStyle = color;
-        ctx.fillRect(x - candleW / 2, Math.min(yOpen, yClose), candleW, Math.max(2, Math.abs(yClose - yOpen)));
+        ctx.fillRect(x - candleW / 2, Math.min(yOpen, yClose), candleW, Math.max(1.8, Math.abs(yClose - yOpen)));
       });
 
-      // Draggable Lines
-      if (state.showOverlayLines) {
-        drawInteractiveLevelLine(w, h, plotW, state.tpLinePrice, state.bullColor, 'TP');
-        drawInteractiveLevelLine(w, h, plotW, state.entryLinePrice, '#64748B', 'Entry');
-        drawInteractiveLevelLine(w, h, plotW, state.slLinePrice, state.bearColor, 'SL');
+      // Optional EMA 20 & EMA 50
+      if (state.showEma) {
+        const ema20 = [], ema50 = [];
+        const k20 = 2 / 21, k50 = 2 / 51;
+        candles.forEach((c, idx) => {
+          if (idx === 0) { ema20.push(c.close); ema50.push(c.close); }
+          else {
+            ema20.push(c.close * k20 + ema20[idx - 1] * (1 - k20));
+            ema50.push(c.close * k50 + ema50[idx - 1] * (1 - k50));
+          }
+        });
+        const drawLine = (arr, col) => {
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 1.25;
+          ctx.beginPath();
+          arr.forEach((v, idx) => {
+            const x = idx * stepX + stepX * 0.5;
+            const y = priceToY(v, h);
+            if (idx === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        };
+        drawLine(ema20, '#38BDF8');
+        drawLine(ema50, '#F59E0B');
       }
 
-      // Crosshair
+      // 3. Current Live Price Line (MT5 Style Horizontal Line + Right Price Pill)
+      const currentPrice = inst.basePrice;
+      const yCur = priceToY(currentPrice, h);
+      ctx.save();
+      ctx.strokeStyle = state.bullColor;
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(0, yCur);
+      ctx.lineTo(plotW, yCur);
+      ctx.stroke();
+      ctx.fillStyle = state.bullColor;
+      ctx.fillRect(plotW + 1, yCur - 8, chartBounds.padRight - 2, 16);
+      ctx.fillStyle = '#02080D';
+      ctx.font = '700 10px ui-monospace, monospace';
+      ctx.fillText(currentPrice.toFixed(inst.digits), plotW + 4, yCur + 3.5);
+      ctx.restore();
+
+      // 4. Draggable TP / SL / Entry Lines
+      if (state.showOverlayLines) {
+        const slPips = Math.abs(state.entryLinePrice - state.slLinePrice) / inst.pipSize;
+        const tpPips = Math.abs(state.tpLinePrice - state.entryLinePrice) / inst.pipSize;
+        const slUsd = Math.round(slPips * state.lotSize * inst.pipValuePerLot);
+        const tpUsd = Math.round(tpPips * state.lotSize * inst.pipValuePerLot);
+        const rr = (tpPips / Math.max(0.1, slPips)).toFixed(1);
+
+        drawLevelLine(w, h, plotW, state.tpLinePrice, state.bullColor, `TP +${rr}R (+$${tpUsd})`, '#02080D');
+        if (state.orderType === 'LIMIT') {
+          drawLevelLine(w, h, plotW, state.entryLinePrice, '#94A3B8', `Limit ${state.entryLinePrice.toFixed(inst.digits)}`, '#02080D');
+        }
+        drawLevelLine(w, h, plotW, state.slLinePrice, state.bearColor, `SL -1R (-$${slUsd})`, '#FFFFFF');
+      }
+
+      // 5. Crosshair & Pip/Dollar Ruler Overlay
       if (state.crosshairEnabled && state.crosshairPos) {
         drawCrosshairOverlay(w, h, plotW, stepX);
       }
     }
 
-    function drawInteractiveLevelLine(w, h, plotW, price, colorHex, tag) {
+    function drawLevelLine(w, h, plotW, price, colorHex, label, textCol) {
       const inst = INSTRUMENTS[state.symbol];
       const y = priceToY(price, h);
       ctx.save();
       ctx.strokeStyle = colorHex;
-      ctx.lineWidth = 1.3;
+      ctx.lineWidth = 1.2;
       ctx.setLineDash([5, 4]);
       ctx.beginPath();
       ctx.moveTo(0, y);
@@ -810,11 +924,21 @@
       ctx.stroke();
 
       ctx.setLineDash([]);
-      ctx.fillStyle = colorHex;
-      ctx.fillRect(plotW + 2, y - 8, chartBounds.padRight - 4, 16);
-      ctx.fillStyle = colorHex === state.bullColor ? '#030D14' : '#FFFFFF';
       ctx.font = '700 10px ui-monospace, monospace';
-      ctx.fillText(price.toFixed(inst.digits), plotW + 5, y + 3.5);
+      const tw = ctx.measureText(label).width;
+      const pw = tw + 10;
+      const px = Math.max(6, plotW - pw - 6);
+      ctx.fillStyle = colorHex;
+      ctx.beginPath();
+      ctx.roundRect(px, y - 9, pw, 18, 4);
+      ctx.fill();
+      ctx.fillStyle = textCol;
+      ctx.fillText(label, px + 5, y + 3.5);
+
+      ctx.fillStyle = colorHex;
+      ctx.fillRect(plotW + 1, y - 8, chartBounds.padRight - 2, 16);
+      ctx.fillStyle = textCol;
+      ctx.fillText(price.toFixed(inst.digits), plotW + 4, y + 3.5);
       ctx.restore();
     }
 
@@ -827,67 +951,147 @@
       const y = Math.max(chartBounds.padTop, Math.min(h - chartBounds.padBottom, pos.y));
       const candleIdx = Math.min(state.candles.length - 1, Math.max(0, Math.floor(x / stepX)));
       const snappedX = candleIdx * stepX + stepX * 0.5;
+      const candle = state.candles[candleIdx];
+      const priceAtY = yToPrice(y, h);
 
       ctx.save();
-      ctx.strokeStyle = 'rgba(226, 232, 240, 0.55)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+      ctx.lineWidth = 0.9;
       ctx.setLineDash([3, 3]);
 
       ctx.beginPath();
-      ctx.moveTo(snappedX, chartBounds.padTop);
+      ctx.moveTo(snappedX, 0);
       ctx.lineTo(snappedX, h - chartBounds.padBottom);
       ctx.moveTo(0, y);
       ctx.lineTo(plotW, y);
       ctx.stroke();
 
-      ctx.fillStyle = '#38BDF8';
-      ctx.fillRect(plotW + 2, y - 8, chartBounds.padRight - 4, 16);
-      ctx.fillStyle = '#030D14';
+      ctx.setLineDash([]);
       ctx.font = '700 10px ui-monospace, monospace';
-      ctx.fillText(yToPrice(y, h).toFixed(inst.digits), plotW + 5, y + 3.5);
+      ctx.fillStyle = '#E2E8F0';
+      ctx.fillRect(plotW + 1, y - 8, chartBounds.padRight - 2, 16);
+      ctx.fillStyle = '#000000';
+      ctx.fillText(priceAtY.toFixed(inst.digits), plotW + 4, y + 3.5);
+
+      if (candle) {
+        const ts = formatTimestamp(candle.time);
+        const tw = ctx.measureText(ts).width + 10;
+        const tx = Math.max(2, Math.min(plotW - tw - 2, snappedX - tw / 2));
+        ctx.fillStyle = '#E2E8F0';
+        ctx.fillRect(tx, h - chartBounds.padBottom + 2, tw, 16);
+        ctx.fillStyle = '#000000';
+        ctx.fillText(ts, tx + 5, h - chartBounds.padBottom + 13);
+      }
+
+      if (state.rulerAnchor) {
+        const ax = state.rulerAnchor.x, ay = state.rulerAnchor.y;
+        const diffPips = (priceAtY - state.rulerAnchor.price) / inst.pipSize;
+        const diffUsd = diffPips * state.lotSize * inst.pipValuePerLot;
+        const diffBars = Math.abs(candleIdx - state.rulerAnchor.candleIdx);
+
+        ctx.fillStyle = diffPips >= 0 ? 'rgba(56, 189, 248, 0.14)' : 'rgba(153, 27, 27, 0.22)';
+        ctx.fillRect(Math.min(ax, snappedX), Math.min(ay, y), Math.abs(snappedX - ax), Math.abs(y - ay));
+
+        const rText = `${diffPips >= 0 ? '+' : ''}${diffPips.toFixed(1)}p (${diffUsd >= 0 ? '+$' : '-$'}${Math.abs(Math.round(diffUsd))}) • ${diffBars} bars`;
+        const rw = ctx.measureText(rText).width + 12;
+        const rx = Math.max(6, Math.min(plotW - rw - 6, (ax + snappedX) / 2 - rw / 2));
+        const ry = Math.max(24, Math.min(h - 44, (ay + y) / 2 - 10));
+        ctx.fillStyle = '#0F172A';
+        ctx.fillRect(rx, ry, rw, 20);
+        ctx.strokeStyle = '#38BDF8';
+        ctx.strokeRect(rx, ry, rw, 20);
+        ctx.fillStyle = '#38BDF8';
+        ctx.fillText(rText, rx + 6, ry + 13.5);
+      }
+
       ctx.restore();
     }
 
-    // Pointer events for Crosshair & Dragging
-    function getPointer(e) {
+    // =========================================================================
+    // 4. TOUCH & MOUSE GESTURES (DRAG TP/SL OR CROSSHAIR RULER)
+    // =========================================================================
+    function getPointerCoords(evt) {
       const rect = canvas.getBoundingClientRect();
-      const cx = e.touches ? e.touches[0].clientX : e.clientX;
-      const cy = e.touches ? e.touches[0].clientY : e.clientY;
-      return { x: cx - rect.left, y: cy - rect.top, h: rect.height };
+      const cx = evt.touches ? evt.touches[0].clientX : evt.clientX;
+      const cy = evt.touches ? evt.touches[0].clientY : evt.clientY;
+      return { x: cx - rect.left, y: cy - rect.top, w: rect.width, h: rect.height };
     }
 
-    canvas.addEventListener('mousedown', (e) => {
-      const p = getPointer(e);
+    function handlePointerDown(evt) {
+      const coords = getPointerCoords(evt);
+
+      if (state.showOverlayLines) {
+        const yTp = priceToY(state.tpLinePrice, coords.h);
+        const ySl = priceToY(state.slLinePrice, coords.h);
+        const yEntry = priceToY(state.entryLinePrice, coords.h);
+        const hit = 18;
+
+        if (Math.abs(coords.y - yTp) < hit) { state.draggingLine = 'TP'; return; }
+        if (Math.abs(coords.y - ySl) < hit) { state.draggingLine = 'SL'; return; }
+        if (state.orderType === 'LIMIT' && Math.abs(coords.y - yEntry) < hit) { state.draggingLine = 'ENTRY'; return; }
+      }
+
       if (state.crosshairEnabled) {
-        state.crosshairPos = { x: p.x, y: p.y };
+        const plotW = coords.w - chartBounds.padRight;
+        const stepX = plotW / Math.max(1, state.candles.length);
+        const candleIdx = Math.min(state.candles.length - 1, Math.max(0, Math.floor(coords.x / stepX)));
+        const snappedX = candleIdx * stepX + stepX * 0.5;
+        state.crosshairPos = { x: coords.x, y: coords.y };
+        state.rulerAnchor = { x: snappedX, y: coords.y, candleIdx, price: yToPrice(coords.y, coords.h) };
         resizeAndDrawChart();
       }
-    });
+    }
 
-    window.addEventListener('mousemove', (e) => {
-      if (state.crosshairEnabled && !state.draggingLine) {
-        const p = getPointer(e);
-        state.crosshairPos = { x: p.x, y: p.y };
+    function handlePointerMove(evt) {
+      const coords = getPointerCoords(evt);
+      const inst = INSTRUMENTS[state.symbol];
+
+      if (state.draggingLine) {
+        evt.preventDefault();
+        const newP = Number(yToPrice(coords.y, coords.h).toFixed(inst.digits));
+        if (state.draggingLine === 'TP') state.tpLinePrice = newP;
+        else if (state.draggingLine === 'SL') state.slLinePrice = newP;
+        else if (state.draggingLine === 'ENTRY') {
+          const d = newP - state.entryLinePrice;
+          state.entryLinePrice = newP;
+          state.slLinePrice = Number((state.slLinePrice + d).toFixed(inst.digits));
+          state.tpLinePrice = Number((state.tpLinePrice + d).toFixed(inst.digits));
+        }
+        updateHudReadouts();
+        resizeAndDrawChart();
+        return;
+      }
+
+      if (state.crosshairEnabled && coords.x >= 0 && coords.x <= coords.w && coords.y >= 0 && coords.y <= coords.h) {
+        if (evt.touches) evt.preventDefault();
+        state.crosshairPos = { x: coords.x, y: coords.y };
+        const plotW = coords.w - chartBounds.padRight;
+        const stepX = plotW / Math.max(1, state.candles.length);
+        const idx = Math.min(state.candles.length - 1, Math.max(0, Math.floor(coords.x / stepX)));
+        const c = state.candles[idx];
+        if (c) {
+          document.getElementById('ohlcReadout').textContent =
+            `O:${c.open.toFixed(inst.digits)} H:${c.high.toFixed(inst.digits)} L:${c.low.toFixed(inst.digits)} C:${c.close.toFixed(inst.digits)}`;
+        }
         resizeAndDrawChart();
       }
-    });
+    }
 
-    canvas.addEventListener('touchstart', (e) => {
-      const p = getPointer(e);
-      state.crosshairPos = { x: p.x, y: p.y };
+    function handlePointerUp() {
+      state.draggingLine = null;
+      state.rulerAnchor = null;
       resizeAndDrawChart();
-    }, { passive: true });
+    }
 
-    window.addEventListener('touchmove', (e) => {
-      if (state.crosshairEnabled && e.touches) {
-        const p = getPointer(e);
-        state.crosshairPos = { x: p.x, y: p.y };
-        resizeAndDrawChart();
-      }
-    }, { passive: true });
+    canvas.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
+    window.addEventListener('touchmove', handlePointerMove, { passive: false });
+    window.addEventListener('touchend', handlePointerUp);
 
     // =========================================================================
-    // 5. LIVE BROKER EXECUTION & SOCKET SETUP
+    // 5. LIVE IC MARKETS LOGIN (cTrader Open API & MT4 MetaApi)
     // =========================================================================
     function connectLiveCTrader() {
       const wsUrl = document.getElementById('ctraderEnvSelect').value;
@@ -897,107 +1101,186 @@
       const accountId = parseInt(document.getElementById('inpCtraderAccountId').value.trim(), 10);
 
       if (!clientId || !clientSecret || !accessToken || !accountId) {
-        logApiMessage('Vui lòng nhập đủ Client ID, Secret, Access Token và Account ID.', true);
-        showToast('Thiếu thông số cTrader!');
+        logApiMessage('Vui lòng nhập đủ Client ID, Client Secret, Access Token và Account ID.', true);
+        showToast('Thiếu thông tin cTrader!');
         return;
       }
 
       try {
         const ws = new WebSocket(wsUrl);
         state.ctraderSocket = ws;
-
         ws.onopen = () => {
-          logApiMessage('Đã mở WebSocket tới cTrader :5036. Gửi ProtoOAApplicationAuthReq...');
+          logApiMessage('Đã nối cổng :5036. Đang xác thực App (2100)...');
           ws.send(JSON.stringify({ clientMsgId: 'auth', payloadType: 2100, payload: { clientId, clientSecret } }));
         };
-
         ws.onmessage = (evt) => {
-          const msg = JSON.parse(evt.data);
-          if (msg.payloadType === 2101) {
-            ws.send(JSON.stringify({ clientMsgId: 'acc', payloadType: 2102, payload: { ctidTraderAccountId: accountId, accessToken } }));
-          } else if (msg.payloadType === 2103) {
-            state.executionMode = 'LIVE_CTRADER';
-            document.getElementById('activeBrokerBadge').textContent = 'LIVE: cTrader #' + accountId;
-            document.getElementById('activeBrokerBadge').style.background = 'rgba(16,185,129,0.2)';
-            document.getElementById('activeBrokerBadge').style.color = '#6EE7B7';
-            logApiMessage(`Đã đăng nhập cTrader LIVE #${accountId}!`);
-            showToast('Kết nối cTrader thành công!');
-          }
+          try {
+            const msg = JSON.parse(evt.data);
+            if (msg.payloadType === 2101) {
+              ws.send(JSON.stringify({ clientMsgId: 'acc', payloadType: 2102, payload: { ctidTraderAccountId: accountId, accessToken } }));
+            } else if (msg.payloadType === 2103) {
+              state.executionMode = 'LIVE_CTRADER';
+              document.getElementById('activeBrokerBadge').textContent = 'LIVE #' + accountId;
+              document.getElementById('activeBrokerBadge').style.color = '#6EE7B7';
+              document.getElementById('connStatusDot').style.background = '#10B981';
+              document.getElementById('liveConnStateLabel').textContent = '● ĐANG KẾT NỐI: cTrader #' + accountId;
+              document.getElementById('btnDisconnectLive').classList.remove('hidden');
+              logApiMessage('Đã đăng nhập thành công tài khoản cTrader #' + accountId);
+              showToast('Đã kết nối cTrader #' + accountId);
+            }
+          } catch (e) {}
         };
-
         ws.onerror = () => logApiMessage('Lỗi kết nối WebSocket cTrader.', true);
       } catch (err) {
         logApiMessage('Lỗi: ' + err.message, true);
       }
     }
 
-    document.getElementById('btnConnectCtraderLive').addEventListener('click', connectLiveCTrader);
-    document.getElementById('btnQuickSignIn').addEventListener('click', () => {
-      document.getElementById('bottomSheetDrawer').style.transform = 'translateY(0)';
-      document.getElementById('btnTabApi').click();
-    });
+    async function connectLiveMt4MetaApi() {
+      const regionUrl = document.getElementById('mt4RegionSelect').value;
+      const token = document.getElementById('inpMt4Token').value.trim();
+      const accountId = document.getElementById('inpMt4AccountId').value.trim();
 
-    // Orders Execution
-    function executeOrder(side) {
-      const inst = INSTRUMENTS[state.symbol];
-      const entry = inst.basePrice;
-      const diff = side === 'BUY' ? inst.pipSize * 30 : -inst.pipSize * 30;
+      if (!token || !accountId) {
+        logApiMessage('Vui lòng nhập đủ MetaApi Token và MT4 Account ID.', true);
+        showToast('Thiếu Token hoặc Account ID MT4!');
+        return;
+      }
 
-      state.positions.unshift({
-        id: 'POS-' + Math.floor(1000 + Math.random() * 9000),
-        symbol: state.symbol,
-        side,
-        lots: state.lotSize,
-        openPrice: entry,
-        slPrice: entry - diff,
-        tpPrice: entry + diff * 2
-      });
-
-      renderPositions();
-      showToast(`Đã khớp ${side} ${state.lotSize} Lot ${state.symbol}`);
+      try {
+        const res = await fetch(`${regionUrl}/users/current/accounts/${accountId}/account-information`, {
+          headers: { 'auth-token': token }
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const info = await res.json();
+        state.executionMode = 'LIVE_MT4';
+        state.balance = Number(info.balance || state.balance);
+        state.equity = Number(info.equity || state.balance);
+        document.getElementById('activeBrokerBadge').textContent = 'MT4 LIVE';
+        document.getElementById('connStatusDot').style.background = '#10B981';
+        document.getElementById('liveConnStateLabel').textContent = '● ĐANG KẾT NỐI: MT4 #' + (info.login || '');
+        document.getElementById('btnDisconnectLive').classList.remove('hidden');
+        renderPositionsTable();
+        computeInterpolatedParameters();
+        showToast('Đã kết nối tài khoản MT4 thật!');
+      } catch (err) {
+        logApiMessage('Không thể kết nối MT4 MetaApi: ' + err.message, true);
+        showToast('Lỗi kết nối MT4: Kiểm tra lại Token');
+      }
     }
 
-    document.getElementById('btnBuyExec').addEventListener('click', () => executeOrder('BUY'));
-    document.getElementById('btnSellExec').addEventListener('click', () => executeOrder('SELL'));
-    document.getElementById('btnCloseAllExec').addEventListener('click', () => {
-      state.positions = [];
-      renderPositions();
-      showToast('Đã đóng toàn bộ vị thế!');
-    });
-
-    function renderPositions() {
-      const tbody = document.getElementById('positionsTableBody');
-      tbody.innerHTML = '';
-      state.positions.forEach(p => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td style="padding:8px 10px; font-weight:700; color:${p.side === 'BUY' ? state.bullColor : state.bearColor};">${p.symbol} ${p.side}</td>
-          <td style="padding:8px 10px;">${p.lots.toFixed(2)}</td>
-          <td style="padding:8px 10px;">${p.openPrice.toFixed(2)}</td>
-          <td style="padding:8px 10px;">${p.slPrice.toFixed(2)} / ${p.tpPrice.toFixed(2)}</td>
-          <td style="padding:8px 10px; color:#38BDF8; font-weight:700;">+$204.00</td>
-          <td style="padding:8px 10px; text-align:right;"><button style="background:#334155; color:#fff; border:0; padding:2px 8px; border-radius:4px;">Đóng</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-      document.getElementById('openCountBadge').textContent = state.positions.length;
-      document.getElementById('drawerPosCount').textContent = state.positions.length;
+    function disconnectLiveBroker() {
+      if (state.ctraderSocket) { try { state.ctraderSocket.close(); } catch (e) {} state.ctraderSocket = null; }
+      state.executionMode = 'SIM';
+      document.getElementById('activeBrokerBadge').textContent = 'SIM';
+      document.getElementById('connStatusDot').style.background = '#F59E0B';
+      document.getElementById('liveConnStateLabel').textContent = '● Chế độ Giả lập (SIM)';
+      document.getElementById('btnDisconnectLive').classList.add('hidden');
+      showToast('Đã chuyển về chế độ Giả lập');
     }
 
-    function renderMatrix() {
+    // =========================================================================
+    // 6. MATRIX TABLE, POSITIONS & UI WIRING
+    // =========================================================================
+    function renderMatrixTable() {
       const tbody = document.getElementById('matrixTableBody');
       tbody.innerHTML = '';
-      state.capitalMatrix.forEach((m, idx) => {
+      state.capitalMatrix.sort((a, b) => a.equity - b.equity).forEach((row, idx) => {
         const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #161F2E';
         tr.innerHTML = `
-          <td style="padding:8px 10px;">$${m.equity}</td>
-          <td style="padding:8px 10px; color:#38BDF8; font-weight:700;">${m.lots}</td>
-          <td style="padding:8px 10px;">$${m.maxRiskUsd}</td>
-          <td style="padding:8px 10px;">${m.slPips}</td>
-          <td style="padding:8px 10px;">${m.tpPips}</td>
-          <td style="padding:8px 10px; text-align:right;"><button style="background:transparent; color:#F87171; border:0;">Xóa</button></td>
+          <td style="padding:6px 8px;"><input type="number" data-idx="${idx}" data-field="equity" value="${row.equity}" class="matrix-input" style="width:76px; background:#0F172A; color:#fff; border:1px solid #334155; padding:3px 5px; border-radius:4px;" /></td>
+          <td style="padding:6px 8px;"><input type="number" step="0.05" data-idx="${idx}" data-field="lots" value="${row.lots}" class="matrix-input" style="width:62px; background:#0F172A; color:#38BDF8; font-weight:700; border:1px solid #334155; padding:3px 5px; border-radius:4px;" /></td>
+          <td style="padding:6px 8px;"><input type="number" step="25" data-idx="${idx}" data-field="maxRiskUsd" value="${row.maxRiskUsd}" class="matrix-input" style="width:66px; background:#0F172A; color:#F87171; border:1px solid #334155; padding:3px 5px; border-radius:4px;" /></td>
+          <td style="padding:6px 8px;"><input type="number" data-idx="${idx}" data-field="slPips" value="${row.slPips}" class="matrix-input" style="width:52px; background:#0F172A; color:#CBD5E1; border:1px solid #334155; padding:3px 5px; border-radius:4px;" /></td>
+          <td style="padding:6px 8px;"><input type="number" data-idx="${idx}" data-field="tpPips" value="${row.tpPips}" class="matrix-input" style="width:52px; background:#0F172A; color:#CBD5E1; border:1px solid #334155; padding:3px 5px; border-radius:4px;" /></td>
+          <td style="padding:6px 8px; text-align:right;"><button data-del="${idx}" class="btn-del-tier" style="background:transparent; color:#F87171; border:0; cursor:pointer;">✕</button></td>
         `;
         tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll('.matrix-input').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+          const i = Number(e.target.dataset.idx);
+          const f = e.target.dataset.field;
+          const v = parseFloat(e.target.value);
+          if (!isNaN(v) && v > 0) {
+            state.capitalMatrix[i][f] = v;
+            computeInterpolatedParameters();
+            resizeAndDrawChart();
+          }
+        });
+      });
+
+      tbody.querySelectorAll('.btn-del-tier').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          if (state.capitalMatrix.length <= 1) return;
+          state.capitalMatrix.splice(Number(e.currentTarget.dataset.del), 1);
+          renderMatrixTable();
+          computeInterpolatedParameters();
+          resizeAndDrawChart();
+        });
+      });
+    }
+
+    function renderPositionsTable() {
+      const tbody = document.getElementById('positionsTableBody');
+      tbody.innerHTML = '';
+      let totalPnl = 0;
+
+      state.positions.forEach((pos, idx) => {
+        const inst = INSTRUMENTS[pos.symbol];
+        const pipDiff = (pos.side === 'BUY' ? (inst.basePrice - pos.openPrice) : (pos.openPrice - inst.basePrice)) / inst.pipSize;
+        const pnlUsd = pipDiff * pos.lots * inst.pipValuePerLot;
+        totalPnl += pnlUsd;
+
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #161F2E';
+        tr.innerHTML = `
+          <td style="padding:8px 10px; font-weight:700; color:${pos.side === 'BUY' ? state.bullColor : state.bearColor};">${pos.symbol} ${pos.side}</td>
+          <td style="padding:8px 10px;">${pos.lots.toFixed(2)}</td>
+          <td style="padding:8px 10px;">${pos.openPrice.toFixed(inst.digits)}</td>
+          <td style="padding:8px 10px; color:#94A3B8;">${pos.slPrice.toFixed(inst.digits)} / ${pos.tpPrice.toFixed(inst.digits)}</td>
+          <td style="padding:8px 10px; font-weight:700; color:${pnlUsd >= 0 ? state.bullColor : '#F87171'};">${pnlUsd >= 0 ? '+$' : '-$'}${Math.abs(pnlUsd).toFixed(2)}</td>
+          <td style="padding:8px 10px; text-align:right;">
+            <button data-be="${idx}" class="btn-pos-be" style="background:#1E293B; color:#38BDF8; border:0; padding:3px 7px; border-radius:4px; margin-right:4px;">BE</button>
+            <button data-close="${idx}" class="btn-pos-close" style="background:rgba(244,63,94,0.2); color:#FDA4AF; border:0; padding:3px 7px; border-radius:4px;">Đóng</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      if (!state.positions.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="padding:14px; text-align:center; color:#64748B;">Chưa có vị thế đang mở.</td></tr>`;
+      }
+
+      if (state.executionMode === 'SIM') {
+        state.equity = Number((state.balance + totalPnl).toFixed(2));
+      }
+      document.getElementById('hudBalanceDisplay').textContent = '$' + state.balance.toLocaleString('en-US', { minimumFractionDigits: 2 });
+      document.getElementById('hudEquityDisplay').textContent = '$' + state.equity.toLocaleString('en-US', { minimumFractionDigits: 2 });
+      document.getElementById('openCountBadge').textContent = state.positions.length;
+      document.getElementById('drawerPosCount').textContent = state.positions.length;
+      document.getElementById('hudOpenPnl').textContent = (totalPnl >= 0 ? '+$' : '-$') + Math.abs(totalPnl).toFixed(2);
+
+      tbody.querySelectorAll('.btn-pos-close').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          state.positions.splice(Number(e.currentTarget.dataset.close), 1);
+          renderPositionsTable();
+          computeInterpolatedParameters();
+          resizeAndDrawChart();
+          showToast('Đã đóng lệnh!');
+        });
+      });
+
+      tbody.querySelectorAll('.btn-pos-be').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const i = Number(e.currentTarget.dataset.be);
+          state.positions[i].slPrice = state.positions[i].openPrice;
+          renderPositionsTable();
+          resizeAndDrawChart();
+          showToast('Đã dời SL về Hòa vốn (BE)!');
+        });
       });
     }
 
@@ -1009,13 +1292,67 @@
       showToast._timer = setTimeout(() => t.classList.add('hidden'), 2200);
     }
 
-    // Drawer Tabs
-    document.getElementById('btnToggleDrawer').addEventListener('click', () => {
-      document.getElementById('bottomSheetDrawer').style.transform = 'translateY(0)';
-    });
-    document.getElementById('btnCloseDrawer').addEventListener('click', () => {
-      document.getElementById('bottomSheetDrawer').style.transform = 'translateY(100%)';
-    });
+    function executeOrder(side) {
+      const inst = INSTRUMENTS[state.symbol];
+      const entry = state.orderType === 'MARKET' ? inst.basePrice : state.entryLinePrice;
+      const distSl = Math.abs(state.entryLinePrice - state.slLinePrice);
+      const distTp = Math.abs(state.tpLinePrice - state.entryLinePrice);
+      const slPrice = side === 'BUY' ? Number((entry - distSl).toFixed(inst.digits)) : Number((entry + distSl).toFixed(inst.digits));
+      const tpPrice = side === 'BUY' ? Number((entry + distTp).toFixed(inst.digits)) : Number((entry - distTp).toFixed(inst.digits));
+
+      state.entryLinePrice = entry;
+      state.slLinePrice = slPrice;
+      state.tpLinePrice = tpPrice;
+
+      if (state.executionMode === 'LIVE_CTRADER' && state.ctraderSocket && state.ctraderSocket.readyState === WebSocket.OPEN) {
+        const accountId = parseInt(document.getElementById('inpCtraderAccountId').value.trim(), 10);
+        state.ctraderSocket.send(JSON.stringify({
+          clientMsgId: 'ord-' + Date.now(),
+          payloadType: 2106,
+          payload: {
+            ctidTraderAccountId: accountId,
+            symbolId: inst.symbolId,
+            orderType: state.orderType === 'MARKET' ? 1 : 2,
+            tradeSide: side === 'BUY' ? 1 : 2,
+            volume: Math.round(state.lotSize * 10000000),
+            relativeStopLoss: Math.round((distSl / inst.pipSize) * 10),
+            relativeTakeProfit: Math.round((distTp / inst.pipSize) * 10)
+          }
+        }));
+      }
+
+      state.positions.unshift({
+        id: 'POS-' + Math.floor(1000 + Math.random() * 9000),
+        symbol: state.symbol,
+        side,
+        lots: state.lotSize,
+        openPrice: entry,
+        slPrice,
+        tpPrice
+      });
+
+      renderPositionsTable();
+      updateHudReadouts();
+      resizeAndDrawChart();
+      showToast(`Đã khớp ${side} ${state.lotSize.toFixed(2)} Lot ${state.symbol}`);
+    }
+
+    // Drawer open/close helpers
+    const drawer = document.getElementById('bottomSheetDrawer');
+    function openDrawerWithTab(tabBtnId) {
+      drawer.style.transform = 'translateY(0%)';
+      if (tabBtnId) document.getElementById(tabBtnId).click();
+    }
+    function closeDrawer() {
+      drawer.style.transform = 'translateY(105%)';
+    }
+
+    document.getElementById('btnToggleDrawer').addEventListener('click', () => openDrawerWithTab());
+    document.getElementById('btnOpenDrawerRail').addEventListener('click', () => openDrawerWithTab('btnTabMatrix'));
+    document.getElementById('btnVolQuickOpen').addEventListener('click', () => openDrawerWithTab('btnTabMatrix'));
+    document.getElementById('btnSymbolTrigger').addEventListener('click', () => openDrawerWithTab('btnTabAppearance'));
+    document.getElementById('btnQuickSignIn').addEventListener('click', () => openDrawerWithTab('btnTabApi'));
+    document.getElementById('btnCloseDrawer').addEventListener('click', closeDrawer);
 
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -1027,60 +1364,157 @@
           b.style.color = '#94A3B8';
         });
         e.currentTarget.style.background = '#38BDF8';
-        e.currentTarget.style.color = '#030D14';
+        e.currentTarget.style.color = '#02080D';
       });
     });
 
-    // Timeframe selector
+    // Left Rail Controls
+    document.getElementById('btnCrosshairTool').addEventListener('click', (e) => {
+      state.crosshairEnabled = !state.crosshairEnabled;
+      e.currentTarget.classList.toggle('active', state.crosshairEnabled);
+      if (!state.crosshairEnabled) { state.crosshairPos = null; state.rulerAnchor = null; }
+      resizeAndDrawChart();
+    });
+
+    document.getElementById('btnToggleLines').addEventListener('click', (e) => {
+      state.showOverlayLines = !state.showOverlayLines;
+      e.currentTarget.classList.toggle('active', state.showOverlayLines);
+      resizeAndDrawChart();
+    });
+
     document.querySelectorAll('.tf-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.tf-btn').forEach(b => {
-          b.style.background = 'transparent';
-          b.style.color = '#94A3B8';
-        });
-        e.currentTarget.style.background = '#38BDF8';
-        e.currentTarget.style.color = '#030D14';
+        document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
         state.timeframe = e.currentTarget.dataset.tf;
+        document.getElementById('headerTfText').textContent = state.timeframe;
         generateCandlesForSymbol(state.symbol);
         resizeAndDrawChart();
       });
     });
 
-    document.getElementById('btnCrosshairTool').addEventListener('click', (e) => {
-      state.crosshairEnabled = !state.crosshairEnabled;
-      e.currentTarget.style.background = state.crosshairEnabled ? 'rgba(56,189,248,0.2)' : 'transparent';
-      if (!state.crosshairEnabled) state.crosshairPos = null;
+    // Execution Buttons
+    document.getElementById('btnBuyExec').addEventListener('click', () => executeOrder('BUY'));
+    document.getElementById('btnSellExec').addEventListener('click', () => executeOrder('SELL'));
+    document.getElementById('btnCloseAllExec').addEventListener('click', () => {
+      state.positions = [];
+      renderPositionsTable();
+      computeInterpolatedParameters();
+      resizeAndDrawChart();
+      showToast('Đã đóng toàn bộ vị thế!');
+    });
+
+    // Symbol & Color Customizer
+    document.getElementById('symbolSelect').addEventListener('change', (e) => {
+      state.symbol = e.target.value;
+      const inst = INSTRUMENTS[state.symbol];
+      document.getElementById('headerSymbolText').textContent = inst.name;
+      document.getElementById('headerSymbolDesc').innerHTML = `${inst.desc} • <span id="ohlcReadout" class="font-mono" style="font-size:10px; color:#94A3B8;"></span>`;
+      document.getElementById('livePriceDisplay').textContent = inst.basePrice.toFixed(inst.digits);
+      document.getElementById('liveSpreadBadge').textContent = `Spread: ${inst.spreadPips}p`;
+      generateCandlesForSymbol(state.symbol);
       resizeAndDrawChart();
     });
 
-    // Initialize
-    
-    document.getElementById('btnClearApiLog').addEventListener('click', () => {
-      document.getElementById('apiConsoleLog').innerHTML = '';
-    });
-    document.getElementById('btnResetColors').addEventListener('click', () => {
-      state.bullColor = '#38BDF8';
-      state.bearColor = '#991B1B';
-      document.documentElement.style.setProperty('--bull-color', '#38BDF8');
-      document.documentElement.style.setProperty('--bear-color', '#991B1B');
+    function applyCustomColors(bullHex, bearHex) {
+      state.bullColor = bullHex;
+      state.bearColor = bearHex;
+      document.documentElement.style.setProperty('--bull-color', bullHex);
+      document.documentElement.style.setProperty('--bear-color', bearHex);
+      document.getElementById('inputBullColor').value = bullHex;
+      document.getElementById('inputBearColor').value = bearHex;
+      document.getElementById('labelBullHex').textContent = bullHex.toUpperCase();
+      document.getElementById('labelBearHex').textContent = bearHex.toUpperCase();
       resizeAndDrawChart();
-      showToast('Đã đặt lại màu nến chuẩn!');
+    }
+
+    document.getElementById('inputBullColor').addEventListener('input', (e) => applyCustomColors(e.target.value, state.bearColor));
+    document.getElementById('inputBearColor').addEventListener('input', (e) => applyCustomColors(state.bullColor, e.target.value));
+    document.getElementById('btnResetColors').addEventListener('click', () => {
+      applyCustomColors('#38BDF8', '#991B1B');
+      showToast('Đã khôi phục màu chuẩn!');
     });
-    document.getElementById('btnToggleLines').addEventListener('click', (e) => {
-      state.showOverlayLines = !state.showOverlayLines;
-      e.currentTarget.textContent = 'Đường TP/SL: ' + (state.showOverlayLines ? 'BẬT' : 'TẮT');
+    document.getElementById('chkShowEma').addEventListener('change', (e) => {
+      state.showEma = e.target.checked;
+      resizeAndDrawChart();
+    });
+
+    // Volume & Matrix Settings
+    function setVolModeActive(btnId, mode) {
+      state.volMode = mode;
+      ['btnVolModeAuto', 'btnVolModeRisk05', 'btnVolModeRisk10', 'btnVolModeRisk20'].forEach(id => {
+        const el = document.getElementById(id);
+        if (id === btnId) { el.style.background = '#38BDF8'; el.style.color = '#02080D'; }
+        else { el.style.background = '#161F2E'; el.style.color = '#94A3B8'; }
+      });
+      computeInterpolatedParameters();
+      resizeAndDrawChart();
+    }
+    document.getElementById('btnVolModeAuto').addEventListener('click', () => setVolModeActive('btnVolModeAuto', 'AUTO_MATRIX'));
+    document.getElementById('btnVolModeRisk05').addEventListener('click', () => setVolModeActive('btnVolModeRisk05', 'RISK_05'));
+    document.getElementById('btnVolModeRisk10').addEventListener('click', () => setVolModeActive('btnVolModeRisk10', 'RISK_10'));
+    document.getElementById('btnVolModeRisk20').addEventListener('click', () => setVolModeActive('btnVolModeRisk20', 'RISK_20'));
+
+    document.getElementById('btnLotMinus').addEventListener('click', () => {
+      state.volMode = 'MANUAL';
+      state.lotSize = Math.max(0.01, Number((state.lotSize - 0.05).toFixed(2)));
+      computeInterpolatedParameters();
+      resizeAndDrawChart();
+    });
+    document.getElementById('btnLotPlus').addEventListener('click', () => {
+      state.volMode = 'MANUAL';
+      state.lotSize = Number((state.lotSize + 0.05).toFixed(2));
+      computeInterpolatedParameters();
+      resizeAndDrawChart();
+    });
+    document.getElementById('inputLotSize').addEventListener('change', (e) => {
+      const v = parseFloat(e.target.value);
+      if (!isNaN(v) && v >= 0.01) {
+        state.volMode = 'MANUAL';
+        state.lotSize = Number(v.toFixed(2));
+        computeInterpolatedParameters();
+        resizeAndDrawChart();
+      }
+    });
+    document.getElementById('simEquitySlider').addEventListener('input', (e) => {
+      state.balance = parseFloat(e.target.value);
+      document.getElementById('simEquityLabel').textContent = '$' + state.balance.toLocaleString('en-US');
+      renderPositionsTable();
+      computeInterpolatedParameters();
+      resizeAndDrawChart();
+    });
+    document.getElementById('chkLinearInterp').addEventListener('change', (e) => {
+      state.linearInterpolation = e.target.checked;
+      computeInterpolatedParameters();
+      resizeAndDrawChart();
+    });
+    document.getElementById('chkInterpolateSl').addEventListener('change', (e) => {
+      state.interpolateSlByVol = e.target.checked;
+      computeInterpolatedParameters();
+      resizeAndDrawChart();
+    });
+    document.getElementById('rrRatioSelect').addEventListener('change', (e) => {
+      state.rrRatio = parseFloat(e.target.value);
+      computeInterpolatedParameters();
+      resizeAndDrawChart();
+    });
+    document.getElementById('orderTypeSelect').addEventListener('change', (e) => {
+      state.orderType = e.target.value;
       resizeAndDrawChart();
     });
     document.getElementById('btnAddMatrixTier').addEventListener('click', () => {
-      state.capitalMatrix.push({ equity: 75000, lots: 4.5, maxRiskUsd: 1500, slPips: 30, tpPips: 60 });
-      renderMatrix();
+      const last = state.capitalMatrix[state.capitalMatrix.length - 1] || { equity: 10000, lots: 0.5, maxRiskUsd: 200, slPips: 35, tpPips: 70 };
+      state.capitalMatrix.push({ equity: last.equity + 15000, lots: Number((last.lots + 0.75).toFixed(2)), maxRiskUsd: last.maxRiskUsd + 300, slPips: last.slPips, tpPips: last.tpPips });
+      renderMatrixTable();
       computeInterpolatedParameters();
     });
+
+    // API Switch & Connect Buttons
     document.getElementById('btnApiCtrader').addEventListener('click', () => {
       document.getElementById('formCtraderPanel').style.display = 'flex';
       document.getElementById('formMt4Panel').style.display = 'none';
       document.getElementById('btnApiCtrader').style.background = '#38BDF8';
-      document.getElementById('btnApiCtrader').style.color = '#030D14';
+      document.getElementById('btnApiCtrader').style.color = '#02080D';
       document.getElementById('btnApiMt4').style.background = '#1E293B';
       document.getElementById('btnApiMt4').style.color = '#94A3B8';
     });
@@ -1088,27 +1522,81 @@
       document.getElementById('formCtraderPanel').style.display = 'none';
       document.getElementById('formMt4Panel').style.display = 'flex';
       document.getElementById('btnApiMt4').style.background = '#FBBF24';
-      document.getElementById('btnApiMt4').style.color = '#030D14';
+      document.getElementById('btnApiMt4').style.color = '#02080D';
       document.getElementById('btnApiCtrader').style.background = '#1E293B';
       document.getElementById('btnApiCtrader').style.color = '#94A3B8';
     });
-    document.getElementById('btnConnectMt4Live').addEventListener('click', () => {
-      const tok = document.getElementById('inpMt4Token').value.trim();
-      const acc = document.getElementById('inpMt4AccountId').value.trim();
-      if (!tok || !acc) { showToast('Vui lòng nhập Token & Account ID MT4!'); return; }
-      state.executionMode = 'LIVE_MT4';
-      document.getElementById('activeBrokerBadge').textContent = 'LIVE: MT4 #' + acc.slice(0,6);
-      document.getElementById('activeBrokerBadge').style.background = 'rgba(245,158,11,0.2)';
-      document.getElementById('activeBrokerBadge').style.color = '#FBBF24';
-      logApiMessage('Đã kết nối tài khoản MT4 MetaApi!');
-      showToast('Kết nối MT4 thành công!');
+    document.getElementById('btnConnectCtraderLive').addEventListener('click', connectLiveCTrader);
+    document.getElementById('btnConnectMt4Live').addEventListener('click', connectLiveMt4MetaApi);
+    document.getElementById('btnDisconnectLive').addEventListener('click', disconnectLiveBroker);
+    document.getElementById('btnClearApiLog').addEventListener('click', () => { document.getElementById('apiConsoleLog').innerHTML = ''; });
+
+    // Swift Code Modal
+    const SWIFT_FILES = {
+      fileRiskEngine: `// RiskAndVolumeEngine.swift — Nội suy tuyến tính Volume & TP/SL theo Bảng Vốn\nimport Foundation\n\npublic struct CapitalTier: Codable {\n    public var equity: Double\n    public var baseLots: Double\n    public var maxRiskUSD: Double\n    public var defaultSLPips: Double\n    public var defaultTPPips: Double\n}`,
+      fileCTraderService: `// ICMarketsService.swift — Kết nối WebSocket cTrader Open API (:5036) & MT4 MetaApi\nimport Foundation\n\npublic final class ICMarketsService: NSObject, URLSessionWebSocketDelegate {\n    // Gửi ProtoOANewOrderReq (2106) & ProtoHeartbeatEvent (51)\n}`,
+      fileDuoViews: `// DuoTradingView.swift — Giao diện tràn viền chuẩn MT5 cho iPhone Duo\nimport SwiftUI\nimport LightweightCharts`
+    };
+    let currentSwiftKey = 'fileRiskEngine';
+    const swiftModal = document.getElementById('swiftCodeModal');
+    const swiftDisplay = document.getElementById('swiftCodeDisplay');
+    document.getElementById('btnOpenSwiftModal').addEventListener('click', () => {
+      swiftDisplay.textContent = SWIFT_FILES[currentSwiftKey];
+      swiftModal.classList.remove('hidden');
+    });
+    document.getElementById('btnCloseSwiftModal').addEventListener('click', () => swiftModal.classList.add('hidden'));
+    document.querySelectorAll('.swift-file-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        currentSwiftKey = e.currentTarget.dataset.swift;
+        swiftDisplay.textContent = SWIFT_FILES[currentSwiftKey];
+      });
+    });
+    document.getElementById('btnCopySwiftCode').addEventListener('click', () => {
+      const code = Object.values(SWIFT_FILES).join('\n\n');
+      try { navigator.clipboard.writeText(code); } catch (e) {}
+      showToast('Đã sao chép Swift Code!');
+    });
+
+    // Live Price Stream & Auto Hardware Orientation Listener
+    setInterval(() => {
+      const inst = INSTRUMENTS[state.symbol];
+      const last = state.candles[state.candles.length - 1];
+      if (!last) return;
+      const step = (Math.random() - 0.492) * inst.pipSize * 1.6;
+      const nextP = Number((last.close + step).toFixed(inst.digits));
+      last.close = nextP;
+      if (nextP > last.high) last.high = nextP;
+      if (nextP < last.low) last.low = nextP;
+      inst.basePrice = nextP;
+
+      if (!state.draggingLine && state.orderType === 'MARKET') {
+        const d = nextP - state.entryLinePrice;
+        state.entryLinePrice = nextP;
+        state.slLinePrice = Number((state.slLinePrice + d).toFixed(inst.digits));
+        state.tpLinePrice = Number((state.tpLinePrice + d).toFixed(inst.digits));
+      }
+      document.getElementById('livePriceDisplay').textContent = nextP.toFixed(inst.digits);
+      renderPositionsTable();
+      updateHudReadouts();
+      resizeAndDrawChart();
+    }, 950);
+
+    // Pure Native Orientation & Resize Handling (Zero manual buttons)
+    window.addEventListener('resize', resizeAndDrawChart);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        generateCandlesForSymbol(state.symbol);
+        resizeAndDrawChart();
+      }, 180);
     });
 
     window.addEventListener('load', () => {
+      applyCustomColors('#38BDF8', '#991B1B');
       generateCandlesForSymbol(state.symbol);
-      renderMatrix();
-      renderPositions();
-      detectRealScreenAndLayout();
+      renderMatrixTable();
+      renderPositionsTable();
+      computeInterpolatedParameters();
+      resizeAndDrawChart();
     });
   </script>
 </body>

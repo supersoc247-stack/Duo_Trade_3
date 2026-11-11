@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="DuoTrade v7.0" />
+  <meta name="apple-mobile-web-app-title" content="DuoTrade v8.0" />
   <meta name="theme-color" content="#000000" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>DuoTrade Pro v7.0 — iPhone Duo Full-Screen Terminal</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <title>DuoTrade Pro v8.0 — iPhone Duo Full-Screen Terminal</title>
   <style>
     :root {
       --bull-color: #38BDF8;
@@ -104,7 +103,7 @@
     }
     .rail-btn.active {
       color: var(--bull-color);
-      background: rgba(56, 189, 248, 0.10);
+      background: transparent !important;
     }
     .rail-btn.active::before {
       content: '';
@@ -331,7 +330,7 @@
             </button>
             <span id="headerTfText" style="color:#38BDF8; font-size:15px; font-weight:700;">M15</span>
             <span id="activeBrokerBadge" class="font-mono" style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.1); color:#CBD5E1;">SIM</span>
-            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v7.0 ↻</button>
+            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v8.0 ↻</button>
             <span id="viewportDebugTag" class="font-mono" style="font-size:9px; color:#64748B;"></span>
           </div>
           <div id="headerSymbolDesc" style="color:#94A3B8; font-size:11px; margin-top:1px; pointer-events:none;">
@@ -393,7 +392,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnMenuTabMatrix" class="big-tab-btn active">
-              📊 1. Bảng Vốn &amp; TP/SL (v7.0)
+              📊 1. Bảng Vốn &amp; TP/SL (v8.0)
             </button>
             <button id="btnMenuTabPositions" class="big-tab-btn">
               📈 2. Lệnh Đang Mở (<span id="drawerPosCount">0</span>)
@@ -524,7 +523,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnSetTabAppearance" class="big-tab-btn active">
-              🎨 1. Cặp Tiền &amp; Màu Nến (v7.0)
+              🎨 1. Cặp Tiền &amp; Màu Nến (v8.0)
             </button>
             <button id="btnSetTabApi" class="big-tab-btn">
               🔑 2. Đăng nhập IC Markets
@@ -671,7 +670,7 @@
                 <button id="btnClearApiLog" style="background:transparent; border:0; color:#94A3B8; font-size:13px; cursor:pointer;">Xóa log</button>
               </div>
               <div id="apiConsoleLog" style="height:80px; overflow-y:auto; color:#38BDF8; line-height:1.4;">
-                <div>[Hệ thống v7.0] Đã cân bằng tỷ lệ nút SELL = BUY (max 92px) và khóa khung hình theo visualViewport thực tế.</div>
+                <div>[Hệ thống v8.0] Đã cân bằng tỷ lệ nút SELL = BUY (max 92px) và khóa khung hình theo visualViewport thực tế.</div>
               </div>
             </div>
           </div>
@@ -1866,7 +1865,19 @@
       showToast('Đã sao chép Swift Code!');
     });
 
-    bindFastTap('btnForceReloadVersion', () => {
+    bindFastTap('btnForceReloadVersion', async () => {
+      showToast('Đang tải bản mới nhất từ GitHub (Bypass Cache)...');
+      try {
+        const freshUrl = window.location.pathname + '?nocache=' + Date.now();
+        const res = await fetch(freshUrl, { cache: 'reload' });
+        if (res.ok) {
+          const html = await res.text();
+          document.open();
+          document.write(html);
+          document.close();
+          return;
+        }
+      } catch (e) {}
       const url = new URL(window.location.href);
       url.searchParams.set('v', Date.now().toString());
       window.location.replace(url.toString());

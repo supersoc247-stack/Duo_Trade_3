@@ -7,6 +7,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="DuoTrade Pro" />
   <meta name="theme-color" content="#000000" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>DuoTrade Pro — iPhone Duo Full-Screen Terminal</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <style>
@@ -301,6 +304,7 @@
             </button>
             <span id="headerTfText" style="color:#38BDF8; font-size:15px; font-weight:700;">M15</span>
             <span id="activeBrokerBadge" class="font-mono" style="font-size:10px; padding:1px 6px; border-radius:4px; background:rgba(255,255,255,0.1); color:#CBD5E1;">SIM</span>
+            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:700; padding:1px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Nhấn để xóa cache & tải bản mới nhất">v4.0 ↻</button>
           </div>
           <div id="headerSymbolDesc" style="color:#94A3B8; font-size:11px; margin-top:1px;">
             Gold vs US Dollar • <span id="ohlcReadout" class="font-mono" style="font-size:11px; color:#CBD5E1;">O:2641.20 H:2643.80 L:2640.50 C:2642.50</span>
@@ -359,7 +363,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnMenuTabMatrix" class="big-tab-btn active">
-              📊 1. Bảng Vốn &amp; Nội suy TP/SL
+              📊 1. Bảng Vốn &amp; TP/SL (v4.0)
             </button>
             <button id="btnMenuTabPositions" class="big-tab-btn">
               📈 2. Lệnh Đang Mở (<span id="drawerPosCount">1</span>)
@@ -495,7 +499,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnSetTabAppearance" class="big-tab-btn active">
-              🎨 1. Cặp Tiền &amp; Màu Nến
+              🎨 1. Cặp Tiền &amp; Màu Nến (v4.0)
             </button>
             <button id="btnSetTabApi" class="big-tab-btn">
               🔑 2. Đăng nhập IC Markets
@@ -1807,6 +1811,12 @@
       updateHudReadouts();
       syncViewportAndRedraw();
     }, 950);
+
+    document.getElementById('btnForceReloadVersion').addEventListener('click', () => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('v', Date.now().toString());
+      window.location.replace(url.toString());
+    });
 
     window.addEventListener('load', () => {
       applyCustomColors('#38BDF8', '#991B1B');

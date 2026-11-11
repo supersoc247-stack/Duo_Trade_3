@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="DuoTrade v12.0" />
+  <meta name="apple-mobile-web-app-title" content="DuoTrade v13.0" />
   <meta name="theme-color" content="#000000" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>DuoTrade Pro v12.0 — iPhone Duo Full-Screen Terminal</title>
+  <title>DuoTrade Pro v13.0 — iPhone Duo Full-Screen Terminal</title>
   <style>
     :root {
       --bull-color: #38BDF8;
@@ -67,12 +67,12 @@
       z-index: 10;
     }
 
-    /* Right Vertical Tool Rail: Placed on the right side! */
+    /* Right Vertical Tool Rail: Placed on the right side with corner-safe padding */
     #rightToolRail {
       width: 48px;
       height: 100%;
-      padding-top: 10px;
-      padding-bottom: 6px;
+      padding-top: 14px;
+      padding-bottom: 10px;
       background: #000000;
       border-left: 1px solid #161C26;
       display: flex;
@@ -111,12 +111,12 @@
       background: transparent !important;
     }
 
-    /* Bottom Execution Dock: natural flex-shrink:0 footer at the bottom of #appViewport */
+    /* Bottom Execution Dock: generous corner padding (22px left, 16px right) so iPhone Duo rounded corners never clip text */
     #bottomExecutionDock {
       position: relative;
       height: 54px;
-      padding-left: 12px;
-      padding-right: 8px;
+      padding-left: 22px;
+      padding-right: 16px;
       background: #030508;
       border-top: 1px solid #161C26;
       display: flex;
@@ -129,7 +129,7 @@
       flex-shrink: 0;
     }
 
-    /* Balance & Equity layout: Large 15px-16px single-line side-by-side on Unfolded (>520px), compact stacked on Folded Portrait (<520px) */
+    /* Balance & Equity layout: Large 16px single-line side-by-side on Unfolded (>520px), compact stacked on Folded Portrait (<520px) */
     #balEqContainer {
       display: flex;
       flex-direction: row;
@@ -152,7 +152,7 @@
       font-weight: 800;
     }
     @media (max-width: 520px) {
-      #bottomExecutionDock { height: 48px; padding-left: 6px; padding-right: 5px; gap: 4px; }
+      #bottomExecutionDock { height: 48px; padding-left: 14px; padding-right: 10px; gap: 4px; }
       #balEqContainer {
         flex-direction: column;
         align-items: flex-start;
@@ -162,6 +162,10 @@
       .bal-eq-item { gap: 3px; line-height: 1.12; }
       .bal-eq-label { font-size: 9px; }
       .bal-eq-val { font-size: 11px; }
+      #btnVolQuickOpen { padding: 0 7px !important; height: 34px !important; }
+      #hudInterpolatedVol { font-size: 12px !important; }
+      .exec-pair-btn { height: 34px !important; min-width: 44px !important; max-width: 58px !important; font-size: 11px !important; }
+      .dock-btn { height: 34px !important; padding: 0 6px !important; font-size: 11px !important; }
     }
 
     .dock-btn {
@@ -306,7 +310,7 @@
         <canvas id="tradingCanvas" style="display:block; width:100%; height:100%; cursor:crosshair;"></canvas>
 
         <!-- MT5-Style Top-Left Transparent Header Overlay with v12.0 Badge & Live Viewport Telemetry -->
-        <div style="position:absolute; top:calc(var(--sat) + 6px); left:12px; z-index:20; pointer-events:auto;">
+        <div style="position:absolute; top:calc(var(--sat) + 14px); left:24px; z-index:20; pointer-events:auto;">
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
             <button id="btnSymbolTrigger" style="background:transparent; border:0; padding:2px 4px 2px 0; color:#FFFFFF; font-weight:800; font-size:16px; display:flex; align-items:center; gap:4px; cursor:pointer;">
               <span id="headerSymbolText">XAUUSD</span>
@@ -314,7 +318,8 @@
             </button>
             <span id="headerTfText" style="color:#38BDF8; font-size:16px; font-weight:700;">M15</span>
             <span id="activeBrokerBadge" class="font-mono" style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.1); color:#CBD5E1;">SIM</span>
-            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v12.0 ↻</button>
+            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v13.0 ↻</button>
+            <button id="btnFullscreenToggle" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(56,189,248,0.2); color:#38BDF8; border:1px solid rgba(56,189,248,0.45); cursor:pointer;" title="Bung toàn màn hình (Ẩn dải đen iOS)">⛶ Full</button>
             <span id="viewportDebugTag" class="font-mono" style="font-size:9px; color:#64748B;"></span>
           </div>
           <div id="headerSymbolDesc" style="color:#94A3B8; font-size:11px; margin-top:1px; pointer-events:none;">
@@ -424,7 +429,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnMenuTabMatrix" class="big-tab-btn active">
-              📊 1. Bảng Vốn &amp; TP/SL (v12.0)
+              📊 1. Bảng Vốn &amp; TP/SL (v13.0)
             </button>
             <button id="btnMenuTabPositions" class="big-tab-btn">
               📈 2. Lệnh Đang Mở (<span id="drawerPosCount">0</span>)
@@ -555,7 +560,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnSetTabAppearance" class="big-tab-btn active">
-              🎨 1. Cặp Tiền &amp; Màu Nến (v12.0)
+              🎨 1. Cặp Tiền &amp; Màu Nến (v13.0)
             </button>
             <button id="btnSetTabApi" class="big-tab-btn">
               🔑 2. Đăng nhập IC Markets
@@ -702,7 +707,7 @@
                 <button id="btnClearApiLog" style="background:transparent; border:0; color:#94A3B8; font-size:13px; cursor:pointer;">Xóa log</button>
               </div>
               <div id="apiConsoleLog" style="height:80px; overflow-y:auto; color:#38BDF8; line-height:1.4;">
-                <div>[Hệ thống v12.0] Đã cân bằng tỷ lệ nút SELL = BUY (max 92px) và khóa khung hình theo visualViewport thực tế.</div>
+                <div>[Hệ thống v13.0] Đã cân bằng tỷ lệ nút SELL = BUY (max 92px) và khóa khung hình theo visualViewport thực tế.</div>
               </div>
             </div>
           </div>
@@ -940,8 +945,24 @@
       const mode = detectDeviceLayoutMode(iW, iH);
 
       // Record highest WebView height seen specifically for THIS mode only
+      try {
+        const savedMax = parseInt(sessionStorage.getItem('maxH_' + mode.id) || '0', 10);
+        if (savedMax > mode.knownFullH) mode.knownFullH = savedMax;
+      } catch (e) {}
       if (iH > mode.knownFullH) {
         mode.knownFullH = iH;
+        try { sessionStorage.setItem('maxH_' + mode.id, String(iH)); } catch (e) {}
+      } else if (mode.id === 'UNFOLDED_LANDSCAPE' && mode.knownFullH - iH >= 40) {
+        // iOS Standalone PWA bug: after rotating Portrait -> Landscape, iOS shrinks WKWebView from 867x669 to 867x587.
+        // Auto-recover by triggering a one-time instant navigation reload if not already reloaded in the last 3 seconds!
+        try {
+          const lastFix = parseInt(sessionStorage.getItem('lastLandscapeFixTs') || '0', 10);
+          if (Date.now() - lastFix > 3500) {
+            sessionStorage.setItem('lastLandscapeFixTs', String(Date.now()));
+            window.location.reload();
+            return;
+          }
+        } catch (e) {}
       }
 
       if (currentLayoutMode !== mode.id) {
@@ -2032,6 +2053,23 @@
       const code = Object.values(SWIFT_FILES).join('\n\n');
       try { navigator.clipboard.writeText(code); } catch (e) {}
       showToast('Đã sao chép Swift Code!');
+    });
+
+    bindFastTap('btnFullscreenToggle', () => {
+      const docEl = document.documentElement;
+      const reqFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+      const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (reqFs) {
+          reqFs.call(docEl).catch(() => {
+            window.location.reload();
+          });
+        } else {
+          window.location.reload();
+        }
+      } else if (exitFs) {
+        exitFs.call(document);
+      }
     });
 
     bindFastTap('btnForceReloadVersion', async () => {

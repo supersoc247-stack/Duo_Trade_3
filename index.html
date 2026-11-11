@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="DuoTrade v8.0" />
+  <meta name="apple-mobile-web-app-title" content="DuoTrade v9.0" />
   <meta name="theme-color" content="#000000" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>DuoTrade Pro v8.0 — iPhone Duo Full-Screen Terminal</title>
+  <title>DuoTrade Pro v9.0 — iPhone Duo Full-Screen Terminal</title>
   <style>
     :root {
       --bull-color: #38BDF8;
@@ -42,32 +42,35 @@
     }
     .hidden { display: none !important; }
 
-    /* Root container strictly bound to visualViewport.width & visualViewport.height via JS */
+    /* Root container pinned to all 4 physical edges of WebView */
     #appViewport {
       position: fixed;
       top: 0;
       left: 0;
-      display: flex;
-      flex-direction: column;
+      right: 0;
+      bottom: 0;
       background: #000000;
       overflow: hidden;
     }
 
-    /* Main Workspace: Left Rail (38px) + Chart Canvas (Flex 1) */
+    /* Main Workspace pinned from top:0 to bottom:50px (Directly above the pinned bottom dock) */
     #mainWorkspace {
-      position: relative;
-      flex: 1 1 auto;
-      width: 100%;
-      min-height: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: calc(50px + var(--sab));
       display: flex;
       flex-direction: row;
       background: #000000;
       overflow: hidden;
+      z-index: 10;
     }
 
     /* MT5-Style Clean Borderless Left Vertical Tool Rail */
     #leftToolRail {
       width: 38px;
+      height: 100%;
       padding-top: calc(var(--sat) + 4px);
       padding-bottom: 6px;
       background: #000000;
@@ -81,45 +84,43 @@
     }
 
     .rail-btn {
-      width: 34px;
+      width: 36px;
       height: 32px;
-      border-radius: 7px;
+      border-radius: 6px;
       border: 0 !important;
       outline: none !important;
-      background: transparent;
-      color: #64748B;
+      background: transparent !important;
+      color: #475569;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 500;
       cursor: pointer;
       touch-action: manipulation;
       position: relative;
     }
     .rail-btn:active {
-      background: rgba(255, 255, 255, 0.08);
       transform: scale(0.92);
     }
     .rail-btn.active {
-      color: var(--bull-color);
+      color: #38BDF8 !important;
+      font-weight: 900 !important;
+      font-size: 12px !important;
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.75);
       background: transparent !important;
     }
-    .rail-btn.active::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 6px;
-      bottom: 6px;
-      width: 3px;
-      border-radius: 0 3px 3px 0;
-      background: var(--bull-color);
-    }
 
-    /* Proportional Flexbox Bottom Dock: SELL & BUY are ALWAYS 100% equal width, never giant, and never clip '☰' */
+    /* Pinned Bottom Execution Dock: position:fixed bottom:0 so it can NEVER be pushed off-screen on rotation! */
     #bottomExecutionDock {
-      height: 50px;
-      padding: 0 6px;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: calc(50px + var(--sab));
+      padding-bottom: var(--sab);
+      padding-left: 6px;
+      padding-right: 6px;
       background: #05080D;
       border-top: 1px solid #161C26;
       display: flex;
@@ -128,8 +129,7 @@
       justify-content: space-between;
       gap: 6px;
       width: 100%;
-      z-index: 30;
-      flex-shrink: 0;
+      z-index: 40;
     }
 
     .dock-btn {
@@ -178,7 +178,8 @@
 
     /* Compact adjustments for Folded Outer Screen (< 440px) so all 6 items fit inside 320px-375px with room to spare */
     @media (max-width: 440px) {
-      #bottomExecutionDock { gap: 4px; padding: 0 5px; height: 48px; }
+      #mainWorkspace { bottom: calc(48px + var(--sab)); }
+      #bottomExecutionDock { gap: 4px; padding-left: 5px; padding-right: 5px; height: calc(48px + var(--sab)); }
       .dock-btn { height: 36px; padding: 0 6px; font-size: 11px; }
       .exec-pair-btn { height: 36px; min-width: 46px; max-width: 68px; font-size: 12px; }
     }
@@ -330,7 +331,7 @@
             </button>
             <span id="headerTfText" style="color:#38BDF8; font-size:15px; font-weight:700;">M15</span>
             <span id="activeBrokerBadge" class="font-mono" style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.1); color:#CBD5E1;">SIM</span>
-            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v8.0 ↻</button>
+            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v9.0 ↻</button>
             <span id="viewportDebugTag" class="font-mono" style="font-size:9px; color:#64748B;"></span>
           </div>
           <div id="headerSymbolDesc" style="color:#94A3B8; font-size:11px; margin-top:1px; pointer-events:none;">
@@ -392,7 +393,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnMenuTabMatrix" class="big-tab-btn active">
-              📊 1. Bảng Vốn &amp; TP/SL (v8.0)
+              📊 1. Bảng Vốn &amp; TP/SL (v9.0)
             </button>
             <button id="btnMenuTabPositions" class="big-tab-btn">
               📈 2. Lệnh Đang Mở (<span id="drawerPosCount">0</span>)
@@ -523,7 +524,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnSetTabAppearance" class="big-tab-btn active">
-              🎨 1. Cặp Tiền &amp; Màu Nến (v8.0)
+              🎨 1. Cặp Tiền &amp; Màu Nến (v9.0)
             </button>
             <button id="btnSetTabApi" class="big-tab-btn">
               🔑 2. Đăng nhập IC Markets
@@ -670,7 +671,7 @@
                 <button id="btnClearApiLog" style="background:transparent; border:0; color:#94A3B8; font-size:13px; cursor:pointer;">Xóa log</button>
               </div>
               <div id="apiConsoleLog" style="height:80px; overflow-y:auto; color:#38BDF8; line-height:1.4;">
-                <div>[Hệ thống v8.0] Đã cân bằng tỷ lệ nút SELL = BUY (max 92px) và khóa khung hình theo visualViewport thực tế.</div>
+                <div>[Hệ thống v9.0] Đã cân bằng tỷ lệ nút SELL = BUY (max 92px) và khóa khung hình theo visualViewport thực tế.</div>
               </div>
             </div>
           </div>
@@ -730,6 +731,16 @@
 
       chartShiftEnabled: true,
       rightOffsetBars: 6,
+      visibleBarsCount: 65,
+      scrollOffsetBars: 0,
+      priceZoomFactor: 1.0,
+      pinchStartDist: null,
+      pinchStartBars: 65,
+      panStartX: null,
+      panStartScroll: 0,
+      yAxisDragStartY: null,
+      yAxisStartZoom: 1.0,
+      lastAxisTapTime: 0,
 
       bullColor: '#38BDF8',
       bearColor: '#991B1B',
@@ -871,56 +882,22 @@
     let chartBounds = { minPrice: 0, maxPrice: 1, padTop: 22, padBottom: 22, padRight: 64 };
     let lastValidW = 360;
     let lastValidH = 520;
-    let maxLandscapeH = 0;
-    let maxPortraitH = 0;
-
-    function getExactUsableViewport() {
-      // Measure the exact visible WebView area reported by iOS WebKit
-      const vvW = window.visualViewport ? Math.round(window.visualViewport.width) : 0;
-      const vvH = window.visualViewport ? Math.round(window.visualViewport.height) : 0;
-      const iW = window.innerWidth || 0;
-      const iH = window.innerHeight || 0;
-      const cW = document.documentElement.clientWidth || 0;
-      const cH = document.documentElement.clientHeight || 0;
-
-      // IMPORTANT: For width, use visualViewport.width (or clientWidth) so we NEVER overflow off the right edge of the WebView!
-      let w = vvW > 0 ? vvW : (cW > 0 ? cW : iW);
-      // For height, take the max of visualViewport.height, innerHeight, and clientHeight
-      let h = Math.max(vvH, iH, cH);
-
-      // Remember the true full-bleed height seen in this session for the same orientation (fixes Landscape -> Portrait -> Landscape shrink bug!)
-      if (w > h && w > 540) {
-        if (h > maxLandscapeH) maxLandscapeH = h;
-        else if (maxLandscapeH - h > 10 && maxLandscapeH - h <= 110) h = maxLandscapeH;
-      } else if (h > w && h > 540) {
-        if (h > maxPortraitH) maxPortraitH = h;
-        else if (maxPortraitH - h > 10 && maxPortraitH - h <= 110) h = maxPortraitH;
-      }
-
-      return { w: Math.max(240, w), h: Math.max(240, h) };
-    }
 
     function syncViewportAndRedraw() {
       window.scrollTo(0, 0);
-      const { w: totalW, h: totalH } = getExactUsableViewport();
-
-      const appRoot = document.getElementById('appViewport');
-      appRoot.style.width = totalW + 'px';
-      appRoot.style.height = totalH + 'px';
-
-      const dbg = document.getElementById('viewportDebugTag');
-      if (dbg) {
-        dbg.textContent = `${totalW}×${totalH}`;
-      }
-
       const wrapper = document.getElementById('chartWrapper');
       if (!wrapper) return;
       const rect = wrapper.getBoundingClientRect();
 
-      const w = rect.width > 40 ? rect.width : lastValidW;
-      const h = rect.height > 40 ? rect.height : lastValidH;
+      const w = rect.width > 40 ? Math.round(rect.width) : lastValidW;
+      const h = rect.height > 40 ? Math.round(rect.height) : lastValidH;
       lastValidW = w;
       lastValidH = h;
+
+      const dbg = document.getElementById('viewportDebugTag');
+      if (dbg) {
+        dbg.textContent = `${Math.round(window.innerWidth)}×${Math.round(window.innerHeight)}`;
+      }
 
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const targetW = Math.round(w * dpr);
@@ -960,7 +937,8 @@
     // =========================================================================
     function generateCandlesForSymbol(symbol) {
       const inst = INSTRUMENTS[symbol];
-      const count = 72;
+      const count = 220;
+      state.scrollOffsetBars = 0;
       const candles = [];
       let price = inst.basePrice - inst.pipSize * 40;
       const now = Math.floor(Date.now() / 1000);
@@ -1010,12 +988,22 @@
       return state.chartShiftEnabled ? state.rightOffsetBars : 0;
     }
 
+    function getVisibleCandlesSlice() {
+      const all = state.candles;
+      const visCount = Math.max(16, Math.min(all.length, Math.round(state.visibleBarsCount)));
+      const maxScroll = Math.max(0, all.length - visCount);
+      const scroll = Math.max(0, Math.min(maxScroll, Math.round(state.scrollOffsetBars)));
+      const endIdx = all.length - scroll;
+      const startIdx = Math.max(0, endIdx - visCount);
+      return all.slice(startIdx, endIdx);
+    }
+
     function drawChart(w, h) {
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, w, h);
 
       const inst = INSTRUMENTS[state.symbol];
-      const candles = state.candles;
+      const candles = getVisibleCandlesSlice();
       if (!candles.length) return;
 
       let minP = Infinity, maxP = -Infinity;
@@ -1027,12 +1015,14 @@
         minP = Math.min(minP, state.slLinePrice, state.tpLinePrice, state.entryLinePrice);
         maxP = Math.max(maxP, state.slLinePrice, state.tpLinePrice, state.entryLinePrice);
       }
-      const margin = (maxP - minP) * 0.09 || inst.pipSize * 20;
-      chartBounds.minPrice = minP - margin;
-      chartBounds.maxPrice = maxP + margin;
+      const rawSpan = Math.max(inst.pipSize * 15, maxP - minP);
+      const midP = (maxP + minP) / 2;
+      const halfSpan = (rawSpan * 0.59) / Math.max(0.25, Math.min(4.0, state.priceZoomFactor));
+      chartBounds.minPrice = midP - halfSpan;
+      chartBounds.maxPrice = midP + halfSpan;
 
       const plotW = w - chartBounds.padRight;
-      const rightShiftBars = getEffectiveRightShiftBars();
+      const rightShiftBars = state.scrollOffsetBars === 0 ? getEffectiveRightShiftBars() : 0;
       const totalSlots = candles.length + rightShiftBars;
       const stepX = plotW / Math.max(1, totalSlots);
 
@@ -1096,7 +1086,7 @@
       ctx.stroke();
 
       // 2. Candlesticks
-      const candleW = Math.max(2.5, Math.min(11, stepX * 0.68));
+      const candleW = Math.max(2.0, Math.min(24, stepX * 0.70));
       candles.forEach((c, idx) => {
         const x = idx * stepX + stepX * 0.5;
         const isBull = c.close >= c.open;
@@ -1217,9 +1207,10 @@
 
       const x = Math.max(0, Math.min(plotW, pos.x));
       const y = Math.max(chartBounds.padTop, Math.min(h - chartBounds.padBottom, pos.y));
-      const candleIdx = Math.min(state.candles.length - 1, Math.max(0, Math.floor(x / stepX)));
+      const visCandles = getVisibleCandlesSlice();
+      const candleIdx = Math.min(visCandles.length - 1, Math.max(0, Math.floor(x / stepX)));
       const snappedX = candleIdx * stepX + stepX * 0.5;
-      const candle = state.candles[candleIdx];
+      const candle = visCandles[candleIdx];
       const priceAtY = yToPrice(y, h);
 
       ctx.save();
@@ -1276,19 +1267,59 @@
     }
 
     // =========================================================================
-    // 5. TOUCH & MOUSE GESTURES ON CHART
+    // 5. MULTI-TOUCH PINCH ZOOM, PRICE-AXIS VERTICAL ZOOM, PAN & CROSSHAIR
     // =========================================================================
     function getPointerCoords(evt) {
       const rect = canvas.getBoundingClientRect();
-      const cx = evt.touches ? evt.touches[0].clientX : evt.clientX;
-      const cy = evt.touches ? evt.touches[0].clientY : evt.clientY;
+      const cx = evt.touches && evt.touches.length ? evt.touches[0].clientX : evt.clientX;
+      const cy = evt.touches && evt.touches.length ? evt.touches[0].clientY : evt.clientY;
       return { x: cx - rect.left, y: cy - rect.top, w: rect.width, h: rect.height };
+    }
+
+    function getTouchDistance(t1, t2) {
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      return Math.hypot(dx, dy);
     }
 
     function handlePointerDown(evt) {
       if (evt.target !== canvas) return;
-      const coords = getPointerCoords(evt);
 
+      // 1. Two-Finger Pinch-to-Zoom Gesture on Chart
+      if (evt.touches && evt.touches.length === 2) {
+        if (evt.cancelable) evt.preventDefault();
+        state.draggingLine = null;
+        state.rulerAnchor = null;
+        state.panStartX = null;
+        state.yAxisDragStartY = null;
+        state.pinchStartDist = Math.max(10, getTouchDistance(evt.touches[0], evt.touches[1]));
+        state.pinchStartBars = state.visibleBarsCount;
+        return;
+      }
+
+      const coords = getPointerCoords(evt);
+      const plotW = coords.w - chartBounds.padRight;
+
+      // 2. Touch/Drag on Right Price Axis (x > plotW): Vertical Price Scale Zoom (or Double-Tap to Reset Zoom)
+      if (coords.x >= plotW) {
+        if (evt.cancelable) evt.preventDefault();
+        const now = Date.now();
+        if (now - state.lastAxisTapTime < 320) {
+          state.priceZoomFactor = 1.0;
+          state.visibleBarsCount = 65;
+          state.scrollOffsetBars = 0;
+          showToast('Đã đặt lại tỷ lệ Zoom mặc định (Auto Fit)');
+          syncViewportAndRedraw();
+          state.lastAxisTapTime = 0;
+          return;
+        }
+        state.lastAxisTapTime = now;
+        state.yAxisDragStartY = coords.y;
+        state.yAxisStartZoom = state.priceZoomFactor;
+        return;
+      }
+
+      // 3. Check if grabbing TP / SL / Entry lines
       if (state.showOverlayLines) {
         const yTp = priceToY(state.tpLinePrice, coords.h);
         const ySl = priceToY(state.slLinePrice, coords.h);
@@ -1300,23 +1331,61 @@
         if (state.orderType === 'LIMIT' && Math.abs(coords.y - yEntry) < hit) { state.draggingLine = 'ENTRY'; return; }
       }
 
+      // 4. Single-Finger / Mouse Interaction: Crosshair Ruler if Crosshair is ON, or Horizontal History Pan if Crosshair is OFF
+      const visCandles = getVisibleCandlesSlice();
+      const rightShift = state.scrollOffsetBars === 0 ? getEffectiveRightShiftBars() : 0;
+      const totalSlots = visCandles.length + rightShift;
+      const stepX = plotW / Math.max(1, totalSlots);
+
       if (state.crosshairEnabled) {
-        const plotW = coords.w - chartBounds.padRight;
-        const totalSlots = state.candles.length + getEffectiveRightShiftBars();
-        const stepX = plotW / Math.max(1, totalSlots);
-        const candleIdx = Math.min(state.candles.length - 1, Math.max(0, Math.floor(coords.x / stepX)));
+        const candleIdx = Math.min(visCandles.length - 1, Math.max(0, Math.floor(coords.x / stepX)));
         const snappedX = candleIdx * stepX + stepX * 0.5;
         state.crosshairPos = { x: coords.x, y: coords.y };
         state.rulerAnchor = { x: snappedX, y: coords.y, candleIdx, price: yToPrice(coords.y, coords.h) };
         syncViewportAndRedraw();
+      } else {
+        state.panStartX = coords.x;
+        state.panStartScroll = state.scrollOffsetBars;
       }
     }
 
     function handlePointerMove(evt) {
-      if (!state.draggingLine && !state.rulerAnchor && evt.target !== canvas) return;
+      // 1. Handle 2-Finger Pinch-to-Zoom
+      if (evt.touches && evt.touches.length === 2 && state.pinchStartDist) {
+        if (evt.cancelable) evt.preventDefault();
+        const curDist = Math.max(10, getTouchDistance(evt.touches[0], evt.touches[1]));
+        const scale = state.pinchStartDist / curDist; // Spread fingers (curDist > start) -> fewer bars (zoom in)
+        const nextBars = Math.round(state.pinchStartBars * scale);
+        state.visibleBarsCount = Math.max(18, Math.min(180, nextBars));
+        syncViewportAndRedraw();
+        return;
+      }
+
+      if (
+        !state.draggingLine &&
+        !state.rulerAnchor &&
+        state.panStartX === null &&
+        state.yAxisDragStartY === null &&
+        evt.target !== canvas
+      ) {
+        return;
+      }
+
       const coords = getPointerCoords(evt);
       const inst = INSTRUMENTS[state.symbol];
+      const plotW = coords.w - chartBounds.padRight;
 
+      // 2. Handle Right Price Axis Vertical Scale Drag
+      if (state.yAxisDragStartY !== null) {
+        if (evt.cancelable) evt.preventDefault();
+        const dy = state.yAxisDragStartY - coords.y; // Drag up -> zoom in price scale; Drag down -> compress price scale
+        const factor = Math.pow(1.006, dy);
+        state.priceZoomFactor = Math.max(0.3, Math.min(3.5, state.yAxisStartZoom * factor));
+        syncViewportAndRedraw();
+        return;
+      }
+
+      // 3. Handle TP / SL / Entry Line Drag
       if (state.draggingLine) {
         if (evt.cancelable) evt.preventDefault();
         const newP = Number(yToPrice(coords.y, coords.h).toFixed(inst.digits));
@@ -1333,14 +1402,28 @@
         return;
       }
 
+      // 4. Handle Horizontal Chart Panning (when Crosshair is OFF)
+      if (state.panStartX !== null) {
+        if (evt.cancelable) evt.preventDefault();
+        const visCandles = getVisibleCandlesSlice();
+        const stepX = plotW / Math.max(1, visCandles.length);
+        const deltaBars = Math.round((coords.x - state.panStartX) / Math.max(2, stepX));
+        const maxScroll = Math.max(0, state.candles.length - state.visibleBarsCount);
+        state.scrollOffsetBars = Math.max(0, Math.min(maxScroll, state.panStartScroll + deltaBars));
+        syncViewportAndRedraw();
+        return;
+      }
+
+      // 5. Handle Crosshair Move
       if (state.crosshairEnabled && coords.x >= 0 && coords.x <= coords.w && coords.y >= 0 && coords.y <= coords.h) {
         if (evt.touches && evt.cancelable) evt.preventDefault();
         state.crosshairPos = { x: coords.x, y: coords.y };
-        const plotW = coords.w - chartBounds.padRight;
-        const totalSlots = state.candles.length + getEffectiveRightShiftBars();
+        const visCandles = getVisibleCandlesSlice();
+        const rightShift = state.scrollOffsetBars === 0 ? getEffectiveRightShiftBars() : 0;
+        const totalSlots = visCandles.length + rightShift;
         const stepX = plotW / Math.max(1, totalSlots);
-        const idx = Math.min(state.candles.length - 1, Math.max(0, Math.floor(coords.x / stepX)));
-        const c = state.candles[idx];
+        const idx = Math.min(visCandles.length - 1, Math.max(0, Math.floor(coords.x / stepX)));
+        const c = visCandles[idx];
         if (c) {
           document.getElementById('ohlcReadout').textContent =
             `O:${c.open.toFixed(inst.digits)} H:${c.high.toFixed(inst.digits)} L:${c.low.toFixed(inst.digits)} C:${c.close.toFixed(inst.digits)}`;
@@ -1349,13 +1432,26 @@
       }
     }
 
-    function handlePointerUp() {
-      if (state.draggingLine || state.rulerAnchor) {
+    function handlePointerUp(evt) {
+      if (evt && evt.touches && evt.touches.length < 2) {
+        state.pinchStartDist = null;
+      }
+      if (state.draggingLine || state.rulerAnchor || state.panStartX !== null || state.yAxisDragStartY !== null) {
         state.draggingLine = null;
         state.rulerAnchor = null;
+        state.panStartX = null;
+        state.yAxisDragStartY = null;
         syncViewportAndRedraw();
       }
     }
+
+    // Trackpad / Mouse Wheel Zoom Support
+    canvas.addEventListener('wheel', (evt) => {
+      evt.preventDefault();
+      const factor = evt.deltaY > 0 ? 1.12 : 0.88;
+      state.visibleBarsCount = Math.max(18, Math.min(180, Math.round(state.visibleBarsCount * factor)));
+      syncViewportAndRedraw();
+    }, { passive: false });
 
     canvas.addEventListener('mousedown', handlePointerDown);
     window.addEventListener('mousemove', handlePointerMove);

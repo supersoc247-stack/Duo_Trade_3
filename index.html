@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="DuoTrade v5.0" />
+  <meta name="apple-mobile-web-app-title" content="DuoTrade v6.0" />
   <meta name="theme-color" content="#000000" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>DuoTrade Pro v5.0 — iPhone Duo Full-Screen Terminal</title>
+  <title>DuoTrade Pro v6.0 — iPhone Duo Full-Screen Terminal</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <style>
     :root {
@@ -18,6 +18,8 @@
       --bear-color: #991B1B;
       --sat: env(safe-area-inset-top, 0px);
       --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+      --sar: env(safe-area-inset-right, 0px);
     }
     * {
       box-sizing: border-box;
@@ -28,36 +30,33 @@
     html, body {
       margin: 0 !important;
       padding: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
+      width: 100%;
+      height: 100%;
       background-color: #000000;
       color: #F1F5F9;
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
       overflow: hidden;
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
     }
     .font-mono {
       font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
     }
     .hidden { display: none !important; }
 
-    /* Pure CSS Full-Bleed Flex Root: stretches to 100% of whatever Safari/iOS gives without JS pixel-lock clipping */
+    /* Hardware-Locked Root Viewport: Explicitly sized via JS to cover 100% physical screen including right/bottom safe areas */
     #appViewport {
       position: fixed;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
-      width: 100%;
-      height: 100%;
       display: flex;
       flex-direction: column;
       background: #000000;
       overflow: hidden;
     }
 
-    /* Main Workspace: Left Rail (42px) + Chart Canvas (Flex 1) */
+    /* Main Workspace: Left Rail (40px) + Chart Canvas (Flex 1) */
     #mainWorkspace {
       position: relative;
       flex: 1 1 auto;
@@ -71,7 +70,7 @@
 
     /* MT5-Style Clean Borderless Left Vertical Tool Rail */
     #leftToolRail {
-      width: 42px;
+      width: 40px;
       padding-top: calc(var(--sat) + 4px);
       padding-bottom: 6px;
       background: #000000;
@@ -84,11 +83,10 @@
       flex-shrink: 0;
     }
 
-    /* Every left-rail icon has the EXACT same borderless style (no random boxes!) */
     .rail-btn {
-      width: 40px;
-      height: 36px;
-      border-radius: 8px;
+      width: 36px;
+      height: 34px;
+      border-radius: 7px;
       border: 0 !important;
       outline: none !important;
       background: transparent;
@@ -96,7 +94,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
       touch-action: manipulation;
@@ -106,7 +104,6 @@
       background: rgba(255, 255, 255, 0.08);
       transform: scale(0.92);
     }
-    /* Active state: bright sky blue text + clean left indicator bar (MT5 style, zero ugly boxes) */
     .rail-btn.active {
       color: var(--bull-color);
       background: rgba(56, 189, 248, 0.10);
@@ -115,37 +112,36 @@
       content: '';
       position: absolute;
       left: 0;
-      top: 7px;
-      bottom: 7px;
+      top: 6px;
+      bottom: 6px;
       width: 3px;
       border-radius: 0 3px 3px 0;
       background: var(--bull-color);
     }
 
-    /* Uniform Bottom Execution Dock */
+    /* Fluid CSS Grid Bottom Execution Dock: MATHEMATICALLY IMPOSSIBLE TO OVERFLOW OR CLIP '☰' */
     #bottomExecutionDock {
-      height: calc(54px + var(--sab));
-      padding-bottom: var(--sab);
-      padding-left: 8px;
-      padding-right: 8px;
+      height: 52px;
+      padding: 0 6px;
       background: #05080D;
       border-top: 1px solid #161C26;
-      display: flex;
-      flex-direction: row;
+      display: grid;
+      grid-template-columns: minmax(68px, auto) minmax(58px, auto) 1fr 1fr minmax(62px, auto) 38px;
       align-items: center;
-      justify-content: space-between;
-      flex-wrap: nowrap;
-      gap: 6px;
+      gap: 5px;
+      width: 100%;
       z-index: 30;
       flex-shrink: 0;
     }
 
-    /* All Bottom Dock Interactive Pills & Buttons share identical 40px height & 9px radius */
+    /* All Bottom Dock Interactive Pills & Buttons share identical 38px height, fluid width, zero overflow */
     .dock-btn {
-      height: 40px;
-      border-radius: 9px;
+      height: 38px;
+      width: 100%;
+      min-width: 0;
+      border-radius: 8px;
       font-weight: 800;
-      font-size: 13px;
+      font-size: 12px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -153,8 +149,8 @@
       border: 1px solid transparent;
       cursor: pointer;
       touch-action: manipulation;
-      flex-shrink: 0;
-      padding: 0 13px;
+      padding: 0 6px;
+      overflow: hidden;
     }
     .dock-btn:active {
       transform: scale(0.95);
@@ -165,20 +161,19 @@
       border-color: #243046;
     }
 
-    /* Folded Portrait Screen (< 460px): Keep Vol pill 100% intact (flex-shrink:0) so it NEVER clips to "Vo"! */
-    @media (max-width: 460px) {
-      #leftToolRail { width: 38px; }
-      .rail-btn { width: 36px; height: 32px; font-size: 11px; }
-      #bottomExecutionDock { padding-left: 6px; padding-right: 6px; gap: 4px; }
-      .dock-btn { height: 38px; padding: 0 9px; font-size: 12px; border-radius: 8px; }
-      #accountMetricsStack {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 1px !important;
+    /* Wider screens (> 520px): Give more breathing room and push action buttons to the right */
+    @media (min-width: 520px) {
+      #bottomExecutionDock {
+        grid-template-columns: auto auto 1fr 86px 86px 96px 42px;
+        padding: 0 10px;
+        gap: 8px;
+        height: 54px;
       }
-      .metric-row { display: flex; align-items: baseline; gap: 4px; line-height: 1.1; }
-      .metric-label { font-size: 9px !important; }
-      .metric-val { font-size: 11px !important; }
+      .dock-btn {
+        height: 40px;
+        font-size: 13px;
+        padding: 0 10px;
+      }
     }
 
     /* Large Touch-Friendly Bottom Sheet Drawers */
@@ -201,7 +196,7 @@
       width: 100%;
       display: flex;
       flex-direction: column;
-      padding-bottom: var(--sab);
+      padding-bottom: 12px;
       box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.85);
     }
 
@@ -272,14 +267,14 @@
         <div style="display:flex; flex-direction:column; align-items:center; gap:2px; width:100%;">
           <!-- Crosshair Tool (+) -->
           <button id="btnCrosshairTool" class="rail-btn active" title="Bật/Tắt Crosshair (+)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <line x1="12" y1="3" x2="12" y2="21"></line>
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <circle cx="12" cy="12" r="3"></circle>
             </svg>
           </button>
 
-          <!-- Timeframe Buttons (Uniform borderless style) -->
+          <!-- Timeframe Buttons -->
           <button data-tf="M1" class="tf-btn rail-btn font-mono">M1</button>
           <button data-tf="M5" class="tf-btn rail-btn font-mono">M5</button>
           <button data-tf="M15" class="tf-btn rail-btn active font-mono">M15</button>
@@ -287,14 +282,14 @@
           <button data-tf="H4" class="tf-btn rail-btn font-mono">H4</button>
           <button data-tf="D1" class="tf-btn rail-btn font-mono">D1</button>
 
-          <!-- Toggle TP/SL Lines (Same uniform borderless style) -->
+          <!-- Toggle TP/SL Lines -->
           <button id="btnToggleLines" class="rail-btn active font-mono" title="Ẩn/Hiện đường kéo TP/SL" style="font-size:10px;">
             TP/SL
           </button>
 
-          <!-- Toggle Chart Shift (Same uniform borderless style) -->
+          <!-- Toggle Chart Shift -->
           <button id="btnToggleChartShift" class="rail-btn active" title="Bật/Tắt khoảng trống bên phải nến cuối (Chart Shift)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <polyline points="15 18 9 12 15 6"></polyline>
               <line x1="20" y1="4" x2="20" y2="20"></line>
             </svg>
@@ -307,7 +302,7 @@
             <span id="connStatusDot" style="width:9px; height:9px; border-radius:999px; background:#F59E0B; display:block;"></span>
           </button>
           <button id="btnOpenSettingsGear" class="rail-btn" title="Cài đặt Giao diện, Cặp tiền & Đăng nhập IC Markets (⚙️)">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
@@ -319,7 +314,7 @@
       <div id="chartWrapper" style="position:relative; flex:1 1 auto; width:100%; height:100%; min-width:0; min-height:0; background:#000000; overflow:hidden;">
         <canvas id="tradingCanvas" style="display:block; width:100%; height:100%; cursor:crosshair;"></canvas>
 
-        <!-- MT5-Style Top-Left Transparent Header Overlay with Visible v5.0 Badge -->
+        <!-- MT5-Style Top-Left Transparent Header Overlay with Visible v6.0 Badge & Dimension Readout -->
         <div style="position:absolute; top:calc(var(--sat) + 6px); left:10px; z-index:20; pointer-events:auto;">
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
             <button id="btnSymbolTrigger" style="background:transparent; border:0; padding:2px 4px 2px 0; color:#FFFFFF; font-weight:800; font-size:15px; display:flex; align-items:center; gap:4px; cursor:pointer;">
@@ -328,7 +323,7 @@
             </button>
             <span id="headerTfText" style="color:#38BDF8; font-size:15px; font-weight:700;">M15</span>
             <span id="activeBrokerBadge" class="font-mono" style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.1); color:#CBD5E1;">SIM</span>
-            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v5.0 ↻</button>
+            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v6.0 ↻</button>
           </div>
           <div id="headerSymbolDesc" style="color:#94A3B8; font-size:11px; margin-top:1px; pointer-events:none;">
             Gold vs US Dollar • <span id="ohlcReadout" class="font-mono" style="font-size:11px; color:#CBD5E1;">O:2641.20 H:2643.80 L:2640.50 C:2642.50</span>
@@ -343,43 +338,48 @@
 
     </div>
 
-    <!-- UNIFORM BOTTOM EXECUTION DOCK (Zero Clipping on Folded Portrait) -->
-    <footer id="bottomExecutionDock">
-      <!-- Left Group: Balance/Equity + Unclipped Vol Button -->
-      <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;" class="font-mono">
-        <div id="accountMetricsStack" style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
-          <div class="metric-row" style="line-height:1.15;">
-            <span class="metric-label" style="font-size:10px; color:#64748B; font-weight:600; margin-right:3px;">BAL</span>
-            <strong id="hudBalanceDisplay" class="metric-val" style="font-size:13px; color:#F8FAFC;">$20,450</strong>
-          </div>
-          <div class="metric-row" style="line-height:1.15;">
-            <span class="metric-label" style="font-size:10px; color:#64748B; font-weight:600; margin-right:3px;">EQ</span>
-            <strong id="hudEquityDisplay" class="metric-val text-bull-dynamic" style="font-size:13px;">$20,654</strong>
-          </div>
+    <!-- FLUID 6-COLUMN CSS GRID BOTTOM DOCK: Zero Overflow, Zero Cut-off on '☰' in Both Folded & Unfolded -->
+    <footer id="bottomExecutionDock" class="font-mono">
+      <!-- Col 1: Stacked BAL & EQ -->
+      <div style="display:flex; flex-direction:column; justify-content:center; line-height:1.15; min-width:0;">
+        <div style="display:flex; align-items:baseline; gap:3px; white-space:nowrap;">
+          <span style="font-size:9px; color:#64748B; font-weight:700;">BAL</span>
+          <strong id="hudBalanceDisplay" style="font-size:11px; color:#F8FAFC;">$20,450</strong>
         </div>
-
-        <!-- Vol Button uses exact same .dock-btn.dock-btn-secondary class & flex-shrink:0 so it NEVER clips to "Vo" -->
-        <button id="btnVolQuickOpen" class="dock-btn dock-btn-secondary font-mono" style="gap:4px; padding:0 10px;" title="Chạm để mở Bảng Vốn & Nội suy Volume">
-          <span style="font-size:11px; color:#94A3B8; font-weight:600;">Vol</span>
-          <strong id="hudInterpolatedVol" style="font-size:13px; color:#38BDF8;">1.23</strong>
-        </button>
+        <div style="display:flex; align-items:baseline; gap:3px; white-space:nowrap;">
+          <span style="font-size:9px; color:#64748B; font-weight:700;">EQ</span>
+          <strong id="hudEquityDisplay" class="text-bull-dynamic" style="font-size:11px;">$20,654</strong>
+        </div>
       </div>
 
-      <!-- Right Group: Uniform Height SELL, BUY, Close, Menu Buttons -->
-      <div style="display:flex; align-items:center; gap:5px; flex-shrink:0;">
-        <button id="btnSellExec" class="dock-btn btn-bear-dynamic font-mono">
-          SELL
-        </button>
-        <button id="btnBuyExec" class="dock-btn btn-bull-dynamic font-mono">
-          BUY
-        </button>
-        <button id="btnCloseAllExec" class="dock-btn dock-btn-secondary font-mono">
-          Close (<span id="openCountBadge">1</span>)
-        </button>
-        <button id="btnToggleMenuDrawer" class="dock-btn dock-btn-secondary font-mono" style="color:#38BDF8; padding:0 11px;" title="Mở Bảng Vốn & Quản lý Lệnh (☰)">
-          ☰
-        </button>
-      </div>
+      <!-- Col 2: Vol Button -->
+      <button id="btnVolQuickOpen" class="dock-btn dock-btn-secondary" style="gap:3px; max-width:96px;" title="Chạm để mở Bảng Vốn & Nội suy Volume">
+        <span style="font-size:10px; color:#94A3B8; font-weight:600;">Vol</span>
+        <strong id="hudInterpolatedVol" style="font-size:12px; color:#38BDF8;">1.23</strong>
+      </button>
+
+      <!-- Col 3 (Wide screens spacer / Narrow screens SELL) -->
+      <div class="hidden sm:block"></div>
+
+      <!-- SELL Button -->
+      <button id="btnSellExec" class="dock-btn btn-bear-dynamic">
+        SELL
+      </button>
+
+      <!-- BUY Button -->
+      <button id="btnBuyExec" class="dock-btn btn-bull-dynamic">
+        BUY
+      </button>
+
+      <!-- Close Button -->
+      <button id="btnCloseAllExec" class="dock-btn dock-btn-secondary">
+        Close (<span id="openCountBadge">0</span>)
+      </button>
+
+      <!-- Menu Button (Guaranteed 38px-42px column inside viewport, NEVER clipped!) -->
+      <button id="btnToggleMenuDrawer" class="dock-btn dock-btn-secondary" style="color:#38BDF8; padding:0;" title="Mở Bảng Vốn & Quản lý Lệnh (☰)">
+        ☰
+      </button>
     </footer>
 
     <!-- ===================================================================== -->
@@ -390,10 +390,10 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnMenuTabMatrix" class="big-tab-btn active">
-              📊 1. Bảng Vốn &amp; TP/SL (v5.0)
+              📊 1. Bảng Vốn &amp; TP/SL (v6.0)
             </button>
             <button id="btnMenuTabPositions" class="big-tab-btn">
-              📈 2. Lệnh Đang Mở (<span id="drawerPosCount">1</span>)
+              📈 2. Lệnh Đang Mở (<span id="drawerPosCount">0</span>)
             </button>
           </div>
 
@@ -482,7 +482,7 @@
           <!-- PANE 1B: ACTIVE POSITIONS & ORDER TYPE -->
           <div id="panePositions" class="hidden" style="display:flex; flex-direction:column; gap:14px;">
             <div style="background:#0F1623; border:1px solid #1E293B; border-radius:14px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; font-size:15px;" class="font-mono">
-              <span>Lợi nhuận nổi (Floating PnL): <strong id="hudOpenPnl" class="text-bull-dynamic" style="font-size:17px;">+$204.00</strong></span>
+              <span>Lợi nhuận nổi (Floating PnL): <strong id="hudOpenPnl" class="text-bull-dynamic" style="font-size:17px;">+$0.00</strong></span>
               <div style="display:flex; align-items:center; gap:8px;">
                 <span style="color:#94A3B8; font-size:14px;">Loại lệnh vào:</span>
                 <select id="orderTypeSelect" style="height:42px; background:#06090F; color:#fff; border:1px solid #334155; padding:0 12px; border-radius:9px; font-size:14px; font-weight:600;" class="font-mono">
@@ -521,7 +521,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnSetTabAppearance" class="big-tab-btn active">
-              🎨 1. Cặp Tiền &amp; Màu Nến (v5.0)
+              🎨 1. Cặp Tiền &amp; Màu Nến (v6.0)
             </button>
             <button id="btnSetTabApi" class="big-tab-btn">
               🔑 2. Đăng nhập IC Markets
@@ -668,7 +668,7 @@
                 <button id="btnClearApiLog" style="background:transparent; border:0; color:#94A3B8; font-size:13px; cursor:pointer;">Xóa log</button>
               </div>
               <div id="apiConsoleLog" style="height:80px; overflow-y:auto; color:#38BDF8; line-height:1.4;">
-                <div>[Hệ thống v5.0] Đã kích hoạt ResizeObserver chống màn đen khi gập/mở và cảm ứng nhạy tức thì (pointerdown).</div>
+                <div>[Hệ thống v6.0] Đã kích hoạt Full-Screen Hardware Breakout: tự động bung kín phần màn hình dưới đồng hồ/Wi-Fi của iOS và sửa lỗi hụt đáy khi xoay ngang-dọc-ngang.</div>
               </div>
             </div>
           </div>
@@ -703,7 +703,7 @@
     // 1. INSTRUMENT SPECS & APPLICATION STATE
     // =========================================================================
     const INSTRUMENTS = {
-      XAUUSD: { name: 'XAUUSD', desc: 'Gold vs US Dollar', symbolId: 41, basePrice: 2642.50, pipSize: 0.10, pipValuePerLot: 10.0, spreadPips: 1.2, digits: 2 },
+      XAUUSD: { name: 'XAUUSD', desc: 'Gold vs US Dollar', symbolId: 41, basePrice: 2635.72, pipSize: 0.10, pipValuePerLot: 10.0, spreadPips: 1.2, digits: 2 },
       EURUSD: { name: 'EURUSD', desc: 'Euro vs US Dollar', symbolId: 1,  basePrice: 1.0845,  pipSize: 0.0001, pipValuePerLot: 10.0, spreadPips: 0.1, digits: 4 },
       GBPUSD: { name: 'GBPUSD', desc: 'Great Britain Pound vs US Dollar', symbolId: 2,  basePrice: 1.2960,  pipSize: 0.0001, pipValuePerLot: 10.0, spreadPips: 0.3, digits: 4 },
       US30:   { name: 'US30',   desc: 'Wall Street 30 Index', symbolId: 101, basePrice: 43850.0, pipSize: 1.0,    pipValuePerLot: 1.0,  spreadPips: 1.5, digits: 1 },
@@ -714,9 +714,9 @@
       executionMode: 'SIM',
       apiRoute: 'CTRADER',
       symbol: 'XAUUSD',
-      timeframe: 'M15',
+      timeframe: 'H1',
       balance: 20450.00,
-      equity: 20654.00,
+      equity: 20450.00,
       volMode: 'AUTO_MATRIX',
       linearInterpolation: true,
       interpolateSlByVol: true,
@@ -736,9 +736,9 @@
       crosshairPos: null,
       rulerAnchor: null,
 
-      entryLinePrice: 2642.50,
-      slLinePrice: 2639.25,
-      tpLinePrice: 2649.00,
+      entryLinePrice: 2635.72,
+      slLinePrice: 2632.39,
+      tpLinePrice: 2642.37,
       draggingLine: null,
 
       ctraderSocket: null,
@@ -750,22 +750,11 @@
         { equity: 50000, lots: 3.00, maxRiskUsd: 1000, slPips: 33, tpPips: 66 }
       ],
 
-      positions: [
-        {
-          id: 'POS-9041',
-          symbol: 'XAUUSD',
-          side: 'BUY',
-          lots: 1.20,
-          openPrice: 2640.80,
-          slPrice: 2637.50,
-          tpPrice: 2647.40
-        }
-      ],
+      positions: [],
 
       candles: []
     };
 
-    // Fast Touch-First Binding Helper (prevents iOS 300ms delay or missed taps when canvas is active)
     function bindFastTap(elOrId, handler) {
       const el = typeof elOrId === 'string' ? document.getElementById(elOrId) : elOrId;
       if (!el) return;
@@ -873,7 +862,7 @@
     }
 
     // =========================================================================
-    // 3. GPU-SAFE CANVAS ENGINE & RESIZEOBSERVER (Zero Black Screen on Fold/Unfold/Rotate)
+    // 3. HARDWARE SCREEN BREAKOUT ENGINE (Fixes Landscape->Portrait->Landscape Bottom Gap & Right Safe-Area Band)
     // =========================================================================
     const canvas = document.getElementById('tradingCanvas');
     const ctx = canvas.getContext('2d');
@@ -881,18 +870,52 @@
     let lastValidW = 360;
     let lastValidH = 520;
 
+    function getTrueViewportSize() {
+      const iW = window.innerWidth || 0;
+      const iH = window.innerHeight || 0;
+      const cW = document.documentElement.clientWidth || 0;
+      const cH = document.documentElement.clientHeight || 0;
+      const vvW = window.visualViewport ? Math.round(window.visualViewport.width) : 0;
+      const vvH = window.visualViewport ? Math.round(window.visualViewport.height) : 0;
+
+      let w = Math.max(iW, cW, vvW);
+      let h = Math.max(iH, cH, vvH);
+
+      // In iOS Standalone PWA mode, WebKit often subtracts the right status column (~64-80px) or leaves stale height after Portrait->Landscape rotation.
+      // Compare with physical screen dimensions (`screen.width` / `screen.height`) matched to current orientation:
+      const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+      if (isStandalone && window.screen) {
+        const s1 = window.screen.width || 0;
+        const s2 = window.screen.height || 0;
+        const isLandscape = w >= h;
+        const physW = isLandscape ? Math.max(s1, s2) : Math.min(s1, s2);
+        const physH = isLandscape ? Math.min(s1, s2) : Math.max(s1, s2);
+
+        // If WebKit clipped the right or bottom edge by 15px..140px, expand to physical screen edge!
+        if (physW > w && (physW - w) <= 150) w = physW;
+        if (physH > h && (physH - h) <= 150) h = physH;
+      }
+
+      return { w: Math.max(240, w), h: Math.max(240, h) };
+    }
+
     function syncViewportAndRedraw() {
+      window.scrollTo(0, 0);
+      const { w: totalW, h: totalH } = getTrueViewportSize();
+
+      const appRoot = document.getElementById('appViewport');
+      appRoot.style.width = totalW + 'px';
+      appRoot.style.height = totalH + 'px';
+
       const wrapper = document.getElementById('chartWrapper');
       if (!wrapper) return;
       const rect = wrapper.getBoundingClientRect();
 
-      // Guard against transient 0x0 dimensions mid-fold/unfold animation on iPhone Duo
       const w = rect.width > 40 ? rect.width : lastValidW;
       const h = rect.height > 40 ? rect.height : lastValidH;
       lastValidW = w;
       lastValidH = h;
 
-      // Cap DPR at 2.0 so iOS Safari never drops WebKit canvas backing store on high-res 7.6" unfolded display
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const targetW = Math.round(w * dpr);
       const targetH = Math.round(h * dpr);
@@ -905,21 +928,26 @@
       drawChart(w, h);
     }
 
-    // Native ResizeObserver tracks exact layout changes across fold, unfold, and rotation
+    // Multi-stage rotation settle schedule (0ms, 60ms, 180ms, 350ms, 600ms, 900ms) so iOS rotation animation NEVER leaves a bottom gap
+    function scheduleRotationSettle() {
+      syncViewportAndRedraw();
+      requestAnimationFrame(syncViewportAndRedraw);
+      [60, 180, 350, 600, 900].forEach(ms => setTimeout(syncViewportAndRedraw, ms));
+    }
+
     const chartWrapperEl = document.getElementById('chartWrapper');
     if (window.ResizeObserver && chartWrapperEl) {
-      const ro = new ResizeObserver(() => {
-        requestAnimationFrame(syncViewportAndRedraw);
-      });
+      const ro = new ResizeObserver(() => requestAnimationFrame(syncViewportAndRedraw));
       ro.observe(chartWrapperEl);
     }
-    window.addEventListener('resize', () => requestAnimationFrame(syncViewportAndRedraw));
-    window.addEventListener('orientationchange', () => {
-      setTimeout(syncViewportAndRedraw, 60);
-      setTimeout(syncViewportAndRedraw, 240);
-    });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', scheduleRotationSettle);
+      window.visualViewport.addEventListener('scroll', scheduleRotationSettle);
+    }
+    window.addEventListener('resize', scheduleRotationSettle);
+    window.addEventListener('orientationchange', scheduleRotationSettle);
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) requestAnimationFrame(syncViewportAndRedraw);
+      if (!document.hidden) scheduleRotationSettle();
     });
 
     // =========================================================================
@@ -931,7 +959,7 @@
       const candles = [];
       let price = inst.basePrice - inst.pipSize * 40;
       const now = Math.floor(Date.now() / 1000);
-      const tfSeconds = { M1: 60, M5: 300, M15: 900, H1: 3600, H4: 14400, D1: 86400 }[state.timeframe] || 900;
+      const tfSeconds = { M1: 60, M5: 300, M15: 900, H1: 3600, H4: 14400, D1: 86400 }[state.timeframe] || 3600;
 
       for (let i = count; i >= 0; i--) {
         const volatility = inst.pipSize * (8 + (i % 7) * 2.5);
@@ -978,7 +1006,6 @@
     }
 
     function drawChart(w, h) {
-      // Explicit solid black background fill so canvas never flickers transparent/blank
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, w, h);
 
@@ -1333,7 +1360,7 @@
     window.addEventListener('touchend', handlePointerUp);
 
     // =========================================================================
-    // 6. SEPARATE MENU (☰) AND SETTINGS (⚙️) DRAWER CONTROLLERS (Fast Tap)
+    // 6. SEPARATE MENU (☰) AND SETTINGS (⚙️) DRAWER CONTROLLERS
     // =========================================================================
     const tradingMenuDrawer = document.getElementById('tradingMenuDrawer');
     const systemSettingsDrawer = document.getElementById('systemSettingsDrawer');
@@ -1384,7 +1411,7 @@
     bindFastTap('btnCloseSettingsDrawer', () => systemSettingsDrawer.classList.add('hidden'));
 
     // =========================================================================
-    // 7. MATRIX TABLE, POSITIONS & EXECUTION WIRING (Fast Tap)
+    // 7. MATRIX TABLE, POSITIONS & EXECUTION WIRING
     // =========================================================================
     function renderMatrixTable() {
       const tbody = document.getElementById('matrixTableBody');
@@ -1541,7 +1568,7 @@
       showToast(`Đã khớp ${side} ${state.lotSize.toFixed(2)} Lot ${state.symbol}`);
     }
 
-    // Left Rail Controls (Bound with Instant FastTap)
+    // Left Rail Controls
     bindFastTap('btnCrosshairTool', () => {
       const btn = document.getElementById('btnCrosshairTool');
       state.crosshairEnabled = !state.crosshairEnabled;
@@ -1587,7 +1614,6 @@
       });
     });
 
-    // Execution Buttons (Fast Tap)
     bindFastTap('btnBuyExec', () => executeOrder('BUY'));
     bindFastTap('btnSellExec', () => executeOrder('SELL'));
     bindFastTap('btnCloseAllExec', () => {
@@ -1598,7 +1624,6 @@
       showToast('Đã đóng toàn bộ vị thế!');
     });
 
-    // Symbol & Color Customizer
     document.getElementById('symbolSelect').addEventListener('change', (e) => {
       state.symbol = e.target.value;
       const inst = INSTRUMENTS[state.symbol];
@@ -1633,7 +1658,6 @@
       syncViewportAndRedraw();
     });
 
-    // Volume & Matrix Settings
     function setVolModeActive(btnId, mode) {
       state.volMode = mode;
       ['btnVolModeAuto', 'btnVolModeRisk05', 'btnVolModeRisk10', 'btnVolModeRisk20'].forEach(id => {
@@ -1836,7 +1860,6 @@
       showToast('Đã sao chép Swift Code!');
     });
 
-    // Cache-busting reload button
     bindFastTap('btnForceReloadVersion', () => {
       const url = new URL(window.location.href);
       url.searchParams.set('v', Date.now().toString());
@@ -1873,7 +1896,7 @@
       renderMatrixTable();
       renderPositionsTable();
       computeInterpolatedParameters();
-      syncViewportAndRedraw();
+      scheduleRotationSettle();
     });
   </script>
 </body>

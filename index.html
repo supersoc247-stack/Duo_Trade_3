@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="DuoTrade v6.0" />
+  <meta name="apple-mobile-web-app-title" content="DuoTrade v7.0" />
   <meta name="theme-color" content="#000000" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>DuoTrade Pro v6.0 — iPhone Duo Full-Screen Terminal</title>
+  <title>DuoTrade Pro v7.0 — iPhone Duo Full-Screen Terminal</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <style>
     :root {
@@ -18,8 +18,6 @@
       --bear-color: #991B1B;
       --sat: env(safe-area-inset-top, 0px);
       --sab: env(safe-area-inset-bottom, 0px);
-      --sal: env(safe-area-inset-left, 0px);
-      --sar: env(safe-area-inset-right, 0px);
     }
     * {
       box-sizing: border-box;
@@ -45,7 +43,7 @@
     }
     .hidden { display: none !important; }
 
-    /* Hardware-Locked Root Viewport: Explicitly sized via JS to cover 100% physical screen including right/bottom safe areas */
+    /* Root container strictly bound to visualViewport.width & visualViewport.height via JS */
     #appViewport {
       position: fixed;
       top: 0;
@@ -56,7 +54,7 @@
       overflow: hidden;
     }
 
-    /* Main Workspace: Left Rail (40px) + Chart Canvas (Flex 1) */
+    /* Main Workspace: Left Rail (38px) + Chart Canvas (Flex 1) */
     #mainWorkspace {
       position: relative;
       flex: 1 1 auto;
@@ -70,7 +68,7 @@
 
     /* MT5-Style Clean Borderless Left Vertical Tool Rail */
     #leftToolRail {
-      width: 40px;
+      width: 38px;
       padding-top: calc(var(--sat) + 4px);
       padding-bottom: 6px;
       background: #000000;
@@ -84,8 +82,8 @@
     }
 
     .rail-btn {
-      width: 36px;
-      height: 34px;
+      width: 34px;
+      height: 32px;
       border-radius: 7px;
       border: 0 !important;
       outline: none !important;
@@ -119,26 +117,24 @@
       background: var(--bull-color);
     }
 
-    /* Fluid CSS Grid Bottom Execution Dock: MATHEMATICALLY IMPOSSIBLE TO OVERFLOW OR CLIP '☰' */
+    /* Proportional Flexbox Bottom Dock: SELL & BUY are ALWAYS 100% equal width, never giant, and never clip '☰' */
     #bottomExecutionDock {
-      height: 52px;
+      height: 50px;
       padding: 0 6px;
       background: #05080D;
       border-top: 1px solid #161C26;
-      display: grid;
-      grid-template-columns: minmax(68px, auto) minmax(58px, auto) 1fr 1fr minmax(62px, auto) 38px;
+      display: flex;
+      flex-direction: row;
       align-items: center;
-      gap: 5px;
+      justify-content: space-between;
+      gap: 6px;
       width: 100%;
       z-index: 30;
       flex-shrink: 0;
     }
 
-    /* All Bottom Dock Interactive Pills & Buttons share identical 38px height, fluid width, zero overflow */
     .dock-btn {
       height: 38px;
-      width: 100%;
-      min-width: 0;
       border-radius: 8px;
       font-weight: 800;
       font-size: 12px;
@@ -149,8 +145,8 @@
       border: 1px solid transparent;
       cursor: pointer;
       touch-action: manipulation;
-      padding: 0 6px;
-      overflow: hidden;
+      padding: 0 8px;
+      flex-shrink: 0;
     }
     .dock-btn:active {
       transform: scale(0.95);
@@ -161,19 +157,31 @@
       border-color: #243046;
     }
 
-    /* Wider screens (> 520px): Give more breathing room and push action buttons to the right */
-    @media (min-width: 520px) {
-      #bottomExecutionDock {
-        grid-template-columns: auto auto 1fr 86px 86px 96px 42px;
-        padding: 0 10px;
-        gap: 8px;
-        height: 54px;
-      }
-      .dock-btn {
-        height: 40px;
-        font-size: 13px;
-        padding: 0 10px;
-      }
+    /* SELL & BUY share identical width at all times (flex: 1 1 0; max-width: 90px) */
+    .exec-pair-btn {
+      flex: 1 1 0%;
+      min-width: 52px;
+      max-width: 92px;
+      height: 38px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .exec-pair-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Compact adjustments for Folded Outer Screen (< 440px) so all 6 items fit inside 320px-375px with room to spare */
+    @media (max-width: 440px) {
+      #bottomExecutionDock { gap: 4px; padding: 0 5px; height: 48px; }
+      .dock-btn { height: 36px; padding: 0 6px; font-size: 11px; }
+      .exec-pair-btn { height: 36px; min-width: 46px; max-width: 68px; font-size: 12px; }
     }
 
     /* Large Touch-Friendly Bottom Sheet Drawers */
@@ -314,7 +322,7 @@
       <div id="chartWrapper" style="position:relative; flex:1 1 auto; width:100%; height:100%; min-width:0; min-height:0; background:#000000; overflow:hidden;">
         <canvas id="tradingCanvas" style="display:block; width:100%; height:100%; cursor:crosshair;"></canvas>
 
-        <!-- MT5-Style Top-Left Transparent Header Overlay with Visible v6.0 Badge & Dimension Readout -->
+        <!-- MT5-Style Top-Left Transparent Header Overlay with v7.0 Badge & Live Viewport Telemetry -->
         <div style="position:absolute; top:calc(var(--sat) + 6px); left:10px; z-index:20; pointer-events:auto;">
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
             <button id="btnSymbolTrigger" style="background:transparent; border:0; padding:2px 4px 2px 0; color:#FFFFFF; font-weight:800; font-size:15px; display:flex; align-items:center; gap:4px; cursor:pointer;">
@@ -323,10 +331,11 @@
             </button>
             <span id="headerTfText" style="color:#38BDF8; font-size:15px; font-weight:700;">M15</span>
             <span id="activeBrokerBadge" class="font-mono" style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.1); color:#CBD5E1;">SIM</span>
-            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v6.0 ↻</button>
+            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v7.0 ↻</button>
+            <span id="viewportDebugTag" class="font-mono" style="font-size:9px; color:#64748B;"></span>
           </div>
           <div id="headerSymbolDesc" style="color:#94A3B8; font-size:11px; margin-top:1px; pointer-events:none;">
-            Gold vs US Dollar • <span id="ohlcReadout" class="font-mono" style="font-size:11px; color:#CBD5E1;">O:2641.20 H:2643.80 L:2640.50 C:2642.50</span>
+            Gold vs US Dollar • <span id="ohlcReadout" class="font-mono" style="font-size:11px; color:#CBD5E1;">O:2633.14 H:2634.72 L:2632.51 C:2633.61</span>
           </div>
         </div>
 
@@ -338,48 +347,42 @@
 
     </div>
 
-    <!-- FLUID 6-COLUMN CSS GRID BOTTOM DOCK: Zero Overflow, Zero Cut-off on '☰' in Both Folded & Unfolded -->
+    <!-- PROPORTIONAL FLEX BOTTOM DOCK: Equal SELL/BUY sizes + Guaranteed unclipped Close & '☰' -->
     <footer id="bottomExecutionDock" class="font-mono">
-      <!-- Col 1: Stacked BAL & EQ -->
-      <div style="display:flex; flex-direction:column; justify-content:center; line-height:1.15; min-width:0;">
-        <div style="display:flex; align-items:baseline; gap:3px; white-space:nowrap;">
-          <span style="font-size:9px; color:#64748B; font-weight:700;">BAL</span>
-          <strong id="hudBalanceDisplay" style="font-size:11px; color:#F8FAFC;">$20,450</strong>
+      <!-- Left Group: Stacked BAL/EQ + Vol Pill -->
+      <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+        <div style="display:flex; flex-direction:column; justify-content:center; line-height:1.15;">
+          <div style="display:flex; align-items:baseline; gap:3px; white-space:nowrap;">
+            <span style="font-size:9px; color:#64748B; font-weight:700;">BAL</span>
+            <strong id="hudBalanceDisplay" style="font-size:11px; color:#F8FAFC;">$20,450</strong>
+          </div>
+          <div style="display:flex; align-items:baseline; gap:3px; white-space:nowrap;">
+            <span style="font-size:9px; color:#64748B; font-weight:700;">EQ</span>
+            <strong id="hudEquityDisplay" class="text-bull-dynamic" style="font-size:11px;">$20,450</strong>
+          </div>
         </div>
-        <div style="display:flex; align-items:baseline; gap:3px; white-space:nowrap;">
-          <span style="font-size:9px; color:#64748B; font-weight:700;">EQ</span>
-          <strong id="hudEquityDisplay" class="text-bull-dynamic" style="font-size:11px;">$20,654</strong>
-        </div>
+
+        <button id="btnVolQuickOpen" class="dock-btn dock-btn-secondary" style="gap:3px;" title="Chạm để mở Bảng Vốn & Nội suy Volume">
+          <span style="font-size:10px; color:#94A3B8; font-weight:600;">Vol</span>
+          <strong id="hudInterpolatedVol" style="font-size:12px; color:#38BDF8;">1.23</strong>
+        </button>
       </div>
 
-      <!-- Col 2: Vol Button -->
-      <button id="btnVolQuickOpen" class="dock-btn dock-btn-secondary" style="gap:3px; max-width:96px;" title="Chạm để mở Bảng Vốn & Nội suy Volume">
-        <span style="font-size:10px; color:#94A3B8; font-weight:600;">Vol</span>
-        <strong id="hudInterpolatedVol" style="font-size:12px; color:#38BDF8;">1.23</strong>
-      </button>
-
-      <!-- Col 3 (Wide screens spacer / Narrow screens SELL) -->
-      <div class="hidden sm:block"></div>
-
-      <!-- SELL Button -->
-      <button id="btnSellExec" class="dock-btn btn-bear-dynamic">
-        SELL
-      </button>
-
-      <!-- BUY Button -->
-      <button id="btnBuyExec" class="dock-btn btn-bull-dynamic">
-        BUY
-      </button>
-
-      <!-- Close Button -->
-      <button id="btnCloseAllExec" class="dock-btn dock-btn-secondary">
-        Close (<span id="openCountBadge">0</span>)
-      </button>
-
-      <!-- Menu Button (Guaranteed 38px-42px column inside viewport, NEVER clipped!) -->
-      <button id="btnToggleMenuDrawer" class="dock-btn dock-btn-secondary" style="color:#38BDF8; padding:0;" title="Mở Bảng Vốn & Quản lý Lệnh (☰)">
-        ☰
-      </button>
+      <!-- Right Group: Equal-width SELL & BUY + Close + Menu (☰) -->
+      <div style="display:flex; align-items:center; justify-content:flex-end; gap:5px; flex:1 1 auto; min-width:0;">
+        <button id="btnSellExec" class="exec-pair-btn btn-bear-dynamic">
+          SELL
+        </button>
+        <button id="btnBuyExec" class="exec-pair-btn btn-bull-dynamic">
+          BUY
+        </button>
+        <button id="btnCloseAllExec" class="dock-btn dock-btn-secondary">
+          Close (<span id="openCountBadge">0</span>)
+        </button>
+        <button id="btnToggleMenuDrawer" class="dock-btn dock-btn-secondary" style="width:36px; padding:0; color:#38BDF8;" title="Mở Bảng Vốn & Quản lý Lệnh (☰)">
+          ☰
+        </button>
+      </div>
     </footer>
 
     <!-- ===================================================================== -->
@@ -390,7 +393,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnMenuTabMatrix" class="big-tab-btn active">
-              📊 1. Bảng Vốn &amp; TP/SL (v6.0)
+              📊 1. Bảng Vốn &amp; TP/SL (v7.0)
             </button>
             <button id="btnMenuTabPositions" class="big-tab-btn">
               📈 2. Lệnh Đang Mở (<span id="drawerPosCount">0</span>)
@@ -521,7 +524,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnSetTabAppearance" class="big-tab-btn active">
-              🎨 1. Cặp Tiền &amp; Màu Nến (v6.0)
+              🎨 1. Cặp Tiền &amp; Màu Nến (v7.0)
             </button>
             <button id="btnSetTabApi" class="big-tab-btn">
               🔑 2. Đăng nhập IC Markets
@@ -555,7 +558,7 @@
               <div style="display:flex; justify-content:space-between; align-items:center;" class="font-mono">
                 <span style="color:#94A3B8;">Giá Bid / Spread hiện tại:</span>
                 <div>
-                  <strong id="livePriceDisplay" class="text-bull-dynamic" style="font-size:16px;">2642.50</strong>
+                  <strong id="livePriceDisplay" class="text-bull-dynamic" style="font-size:16px;">2635.72</strong>
                   <span id="liveSpreadBadge" style="margin-left:8px; font-size:13px; padding:4px 8px; background:#1E293B; border-radius:6px; color:#CBD5E1;">Spread: 1.2p</span>
                 </div>
               </div>
@@ -668,7 +671,7 @@
                 <button id="btnClearApiLog" style="background:transparent; border:0; color:#94A3B8; font-size:13px; cursor:pointer;">Xóa log</button>
               </div>
               <div id="apiConsoleLog" style="height:80px; overflow-y:auto; color:#38BDF8; line-height:1.4;">
-                <div>[Hệ thống v6.0] Đã kích hoạt Full-Screen Hardware Breakout: tự động bung kín phần màn hình dưới đồng hồ/Wi-Fi của iOS và sửa lỗi hụt đáy khi xoay ngang-dọc-ngang.</div>
+                <div>[Hệ thống v7.0] Đã cân bằng tỷ lệ nút SELL = BUY (max 92px) và khóa khung hình theo visualViewport thực tế.</div>
               </div>
             </div>
           </div>
@@ -714,7 +717,7 @@
       executionMode: 'SIM',
       apiRoute: 'CTRADER',
       symbol: 'XAUUSD',
-      timeframe: 'H1',
+      timeframe: 'M15',
       balance: 20450.00,
       equity: 20450.00,
       volMode: 'AUTO_MATRIX',
@@ -862,38 +865,37 @@
     }
 
     // =========================================================================
-    // 3. HARDWARE SCREEN BREAKOUT ENGINE (Fixes Landscape->Portrait->Landscape Bottom Gap & Right Safe-Area Band)
+    // 3. EXACT VISUAL VIEWPORT LOCK (Never overflows screen, never leaves bottom gap)
     // =========================================================================
     const canvas = document.getElementById('tradingCanvas');
     const ctx = canvas.getContext('2d');
     let chartBounds = { minPrice: 0, maxPrice: 1, padTop: 22, padBottom: 22, padRight: 64 };
     let lastValidW = 360;
     let lastValidH = 520;
+    let maxLandscapeH = 0;
+    let maxPortraitH = 0;
 
-    function getTrueViewportSize() {
+    function getExactUsableViewport() {
+      // Measure the exact visible WebView area reported by iOS WebKit
+      const vvW = window.visualViewport ? Math.round(window.visualViewport.width) : 0;
+      const vvH = window.visualViewport ? Math.round(window.visualViewport.height) : 0;
       const iW = window.innerWidth || 0;
       const iH = window.innerHeight || 0;
       const cW = document.documentElement.clientWidth || 0;
       const cH = document.documentElement.clientHeight || 0;
-      const vvW = window.visualViewport ? Math.round(window.visualViewport.width) : 0;
-      const vvH = window.visualViewport ? Math.round(window.visualViewport.height) : 0;
 
-      let w = Math.max(iW, cW, vvW);
-      let h = Math.max(iH, cH, vvH);
+      // IMPORTANT: For width, use visualViewport.width (or clientWidth) so we NEVER overflow off the right edge of the WebView!
+      let w = vvW > 0 ? vvW : (cW > 0 ? cW : iW);
+      // For height, take the max of visualViewport.height, innerHeight, and clientHeight
+      let h = Math.max(vvH, iH, cH);
 
-      // In iOS Standalone PWA mode, WebKit often subtracts the right status column (~64-80px) or leaves stale height after Portrait->Landscape rotation.
-      // Compare with physical screen dimensions (`screen.width` / `screen.height`) matched to current orientation:
-      const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-      if (isStandalone && window.screen) {
-        const s1 = window.screen.width || 0;
-        const s2 = window.screen.height || 0;
-        const isLandscape = w >= h;
-        const physW = isLandscape ? Math.max(s1, s2) : Math.min(s1, s2);
-        const physH = isLandscape ? Math.min(s1, s2) : Math.max(s1, s2);
-
-        // If WebKit clipped the right or bottom edge by 15px..140px, expand to physical screen edge!
-        if (physW > w && (physW - w) <= 150) w = physW;
-        if (physH > h && (physH - h) <= 150) h = physH;
+      // Remember the true full-bleed height seen in this session for the same orientation (fixes Landscape -> Portrait -> Landscape shrink bug!)
+      if (w > h && w > 540) {
+        if (h > maxLandscapeH) maxLandscapeH = h;
+        else if (maxLandscapeH - h > 10 && maxLandscapeH - h <= 110) h = maxLandscapeH;
+      } else if (h > w && h > 540) {
+        if (h > maxPortraitH) maxPortraitH = h;
+        else if (maxPortraitH - h > 10 && maxPortraitH - h <= 110) h = maxPortraitH;
       }
 
       return { w: Math.max(240, w), h: Math.max(240, h) };
@@ -901,11 +903,16 @@
 
     function syncViewportAndRedraw() {
       window.scrollTo(0, 0);
-      const { w: totalW, h: totalH } = getTrueViewportSize();
+      const { w: totalW, h: totalH } = getExactUsableViewport();
 
       const appRoot = document.getElementById('appViewport');
       appRoot.style.width = totalW + 'px';
       appRoot.style.height = totalH + 'px';
+
+      const dbg = document.getElementById('viewportDebugTag');
+      if (dbg) {
+        dbg.textContent = `${totalW}×${totalH}`;
+      }
 
       const wrapper = document.getElementById('chartWrapper');
       if (!wrapper) return;
@@ -928,11 +935,10 @@
       drawChart(w, h);
     }
 
-    // Multi-stage rotation settle schedule (0ms, 60ms, 180ms, 350ms, 600ms, 900ms) so iOS rotation animation NEVER leaves a bottom gap
     function scheduleRotationSettle() {
       syncViewportAndRedraw();
       requestAnimationFrame(syncViewportAndRedraw);
-      [60, 180, 350, 600, 900].forEach(ms => setTimeout(syncViewportAndRedraw, ms));
+      [50, 150, 300, 500, 800, 1200].forEach(ms => setTimeout(syncViewportAndRedraw, ms));
     }
 
     const chartWrapperEl = document.getElementById('chartWrapper');
@@ -959,7 +965,7 @@
       const candles = [];
       let price = inst.basePrice - inst.pipSize * 40;
       const now = Math.floor(Date.now() / 1000);
-      const tfSeconds = { M1: 60, M5: 300, M15: 900, H1: 3600, H4: 14400, D1: 86400 }[state.timeframe] || 3600;
+      const tfSeconds = { M1: 60, M5: 300, M15: 900, H1: 3600, H4: 14400, D1: 86400 }[state.timeframe] || 900;
 
       for (let i = count; i >= 0; i--) {
         const volatility = inst.pipSize * (8 + (i % 7) * 2.5);
@@ -1271,7 +1277,7 @@
     }
 
     // =========================================================================
-    // 5. TOUCH & MOUSE GESTURES ON CHART (Scoped strictly to Canvas)
+    // 5. TOUCH & MOUSE GESTURES ON CHART
     // =========================================================================
     function getPointerCoords(evt) {
       const rect = canvas.getBoundingClientRect();

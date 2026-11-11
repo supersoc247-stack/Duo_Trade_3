@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="DuoTrade Pro" />
+  <meta name="apple-mobile-web-app-title" content="DuoTrade v5.0" />
   <meta name="theme-color" content="#000000" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>DuoTrade Pro — iPhone Duo Full-Screen Terminal</title>
+  <title>DuoTrade Pro v5.0 — iPhone Duo Full-Screen Terminal</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <style>
     :root {
@@ -28,8 +28,8 @@
     html, body {
       margin: 0 !important;
       padding: 0 !important;
-      width: 100%;
-      height: 100%;
+      width: 100% !important;
+      height: 100% !important;
       background-color: #000000;
       color: #F1F5F9;
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
@@ -42,7 +42,7 @@
     }
     .hidden { display: none !important; }
 
-    /* Dynamic JS-locked Viewport Root (Never shrinks on iOS Safari rotation) */
+    /* Pure CSS Full-Bleed Flex Root: stretches to 100% of whatever Safari/iOS gives without JS pixel-lock clipping */
     #appViewport {
       position: fixed;
       top: 0;
@@ -57,10 +57,10 @@
       overflow: hidden;
     }
 
-    /* Main Workspace: Left Rail (44px) + Chart Canvas (Flex 1, 0 right margin) */
+    /* Main Workspace: Left Rail (42px) + Chart Canvas (Flex 1) */
     #mainWorkspace {
       position: relative;
-      flex: 1;
+      flex: 1 1 auto;
       width: 100%;
       min-height: 0;
       display: flex;
@@ -69,13 +69,13 @@
       overflow: hidden;
     }
 
-    /* MT5-Style Left Vertical Tool Rail */
+    /* MT5-Style Clean Borderless Left Vertical Tool Rail */
     #leftToolRail {
-      width: 44px;
+      width: 42px;
       padding-top: calc(var(--sat) + 4px);
       padding-bottom: 6px;
-      background: #04060A;
-      border-right: 1px solid #161D2A;
+      background: #000000;
+      border-right: 1px solid #161C26;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -83,13 +83,16 @@
       z-index: 25;
       flex-shrink: 0;
     }
+
+    /* Every left-rail icon has the EXACT same borderless style (no random boxes!) */
     .rail-btn {
-      width: 36px;
-      height: 34px;
+      width: 40px;
+      height: 36px;
       border-radius: 8px;
-      border: 0;
+      border: 0 !important;
+      outline: none !important;
       background: transparent;
-      color: #94A3B8;
+      color: #64748B;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -97,25 +100,36 @@
       font-weight: 700;
       cursor: pointer;
       touch-action: manipulation;
-      transition: background 0.12s, color 0.12s;
+      position: relative;
     }
     .rail-btn:active {
-      transform: scale(0.94);
+      background: rgba(255, 255, 255, 0.08);
+      transform: scale(0.92);
     }
+    /* Active state: bright sky blue text + clean left indicator bar (MT5 style, zero ugly boxes) */
     .rail-btn.active {
       color: var(--bull-color);
-      background: rgba(56, 189, 248, 0.18);
-      border: 1px solid rgba(56, 189, 248, 0.35);
+      background: rgba(56, 189, 248, 0.10);
+    }
+    .rail-btn.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 7px;
+      bottom: 7px;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--bull-color);
     }
 
-    /* Uniform Single-Row Bottom Execution Dock (Never wraps or misaligns in Folded Portrait) */
+    /* Uniform Bottom Execution Dock */
     #bottomExecutionDock {
       height: calc(54px + var(--sab));
       padding-bottom: var(--sab);
       padding-left: 8px;
       padding-right: 8px;
-      background: #06090F;
-      border-top: 1px solid #161D2A;
+      background: #05080D;
+      border-top: 1px solid #161C26;
       display: flex;
       flex-direction: row;
       align-items: center;
@@ -126,6 +140,7 @@
       flex-shrink: 0;
     }
 
+    /* All Bottom Dock Interactive Pills & Buttons share identical 40px height & 9px radius */
     .dock-btn {
       height: 40px;
       border-radius: 9px;
@@ -135,32 +150,42 @@
       align-items: center;
       justify-content: center;
       white-space: nowrap;
-      border: 0;
+      border: 1px solid transparent;
       cursor: pointer;
       touch-action: manipulation;
       flex-shrink: 0;
       padding: 0 13px;
     }
     .dock-btn:active {
-      transform: scale(0.96);
+      transform: scale(0.95);
+    }
+    .dock-btn-secondary {
+      background: #111826;
+      color: #E2E8F0;
+      border-color: #243046;
     }
 
-    /* Compact responsive scaling for narrow outer screen (< 460px) so everything stays on 1 clean line */
+    /* Folded Portrait Screen (< 460px): Keep Vol pill 100% intact (flex-shrink:0) so it NEVER clips to "Vo"! */
     @media (max-width: 460px) {
       #leftToolRail { width: 38px; }
-      .rail-btn { width: 32px; height: 30px; font-size: 11px; }
+      .rail-btn { width: 36px; height: 32px; font-size: 11px; }
       #bottomExecutionDock { padding-left: 6px; padding-right: 6px; gap: 4px; }
-      .dock-btn { height: 38px; padding: 0 10px; font-size: 12px; border-radius: 8px; }
+      .dock-btn { height: 38px; padding: 0 9px; font-size: 12px; border-radius: 8px; }
+      #accountMetricsStack {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1px !important;
+      }
+      .metric-row { display: flex; align-items: baseline; gap: 4px; line-height: 1.1; }
       .metric-label { font-size: 9px !important; }
       .metric-val { font-size: 11px !important; }
-      .vol-pill { height: 38px !important; padding: 0 7px !important; }
     }
 
     /* Large Touch-Friendly Bottom Sheet Drawers */
     .sheet-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.72);
+      background: rgba(0, 0, 0, 0.76);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
       z-index: 60;
@@ -180,7 +205,6 @@
       box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.85);
     }
 
-    /* Big Touch-Friendly Tab Buttons inside Drawers (48px height, 15px font) */
     .big-tab-btn {
       min-height: 46px;
       padding: 0 16px;
@@ -243,9 +267,9 @@
     <!-- MAIN WORKSPACE: LEFT MT5 RAIL + 100% EDGE-TO-EDGE CHART -->
     <div id="mainWorkspace">
 
-      <!-- LEFT VERTICAL TOOL RAIL -->
+      <!-- UNIFORM BORDERLESS LEFT VERTICAL TOOL RAIL -->
       <aside id="leftToolRail">
-        <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:2px; width:100%;">
           <!-- Crosshair Tool (+) -->
           <button id="btnCrosshairTool" class="rail-btn active" title="Bật/Tắt Crosshair (+)">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -255,7 +279,7 @@
             </svg>
           </button>
 
-          <!-- Timeframe Buttons -->
+          <!-- Timeframe Buttons (Uniform borderless style) -->
           <button data-tf="M1" class="tf-btn rail-btn font-mono">M1</button>
           <button data-tf="M5" class="tf-btn rail-btn font-mono">M5</button>
           <button data-tf="M15" class="tf-btn rail-btn active font-mono">M15</button>
@@ -263,12 +287,12 @@
           <button data-tf="H4" class="tf-btn rail-btn font-mono">H4</button>
           <button data-tf="D1" class="tf-btn rail-btn font-mono">D1</button>
 
-          <!-- Toggle TP/SL Lines -->
+          <!-- Toggle TP/SL Lines (Same uniform borderless style) -->
           <button id="btnToggleLines" class="rail-btn active font-mono" title="Ẩn/Hiện đường kéo TP/SL" style="font-size:10px;">
             TP/SL
           </button>
 
-          <!-- Toggle Chart Shift (Khoảng trống bên phải nến cuối giống nút Chart Shift trên MT5) -->
+          <!-- Toggle Chart Shift (Same uniform borderless style) -->
           <button id="btnToggleChartShift" class="rail-btn active" title="Bật/Tắt khoảng trống bên phải nến cuối (Chart Shift)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <polyline points="15 18 9 12 15 6"></polyline>
@@ -277,10 +301,10 @@
           </button>
         </div>
 
-        <!-- Bottom of Left Rail: Broker Status & Settings Gear (Opens Dedicated Settings Drawer) -->
-        <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
-          <button id="btnQuickSignIn" class="rail-btn" title="Trạng thái kết nối & Đăng nhập IC Markets">
-            <span id="connStatusDot" style="width:10px; height:10px; border-radius:999px; background:#F59E0B; display:block;"></span>
+        <!-- Bottom of Left Rail: Broker Status & Settings Gear -->
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; width:100%;">
+          <button id="btnQuickSignIn" class="rail-btn" title="Đăng nhập IC Markets">
+            <span id="connStatusDot" style="width:9px; height:9px; border-radius:999px; background:#F59E0B; display:block;"></span>
           </button>
           <button id="btnOpenSettingsGear" class="rail-btn" title="Cài đặt Giao diện, Cặp tiền & Đăng nhập IC Markets (⚙️)">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -291,49 +315,53 @@
         </div>
       </aside>
 
-      <!-- FULL-BLEED CHART WRAPPER (Touches Right Edge 100%) -->
-      <div id="chartWrapper" style="position:relative; flex:1; width:100%; height:100%; background:#000000; overflow:hidden;">
+      <!-- FULL-BLEED CHART WRAPPER -->
+      <div id="chartWrapper" style="position:relative; flex:1 1 auto; width:100%; height:100%; min-width:0; min-height:0; background:#000000; overflow:hidden;">
         <canvas id="tradingCanvas" style="display:block; width:100%; height:100%; cursor:crosshair;"></canvas>
 
-        <!-- MT5-Style Top-Left Transparent Header Overlay -->
+        <!-- MT5-Style Top-Left Transparent Header Overlay with Visible v5.0 Badge -->
         <div style="position:absolute; top:calc(var(--sat) + 6px); left:10px; z-index:20; pointer-events:auto;">
-          <div style="display:flex; align-items:baseline; gap:6px;">
-            <button id="btnSymbolTrigger" style="background:transparent; border:0; padding:0; color:#FFFFFF; font-weight:800; font-size:15px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <button id="btnSymbolTrigger" style="background:transparent; border:0; padding:2px 4px 2px 0; color:#FFFFFF; font-weight:800; font-size:15px; display:flex; align-items:center; gap:4px; cursor:pointer;">
               <span id="headerSymbolText">XAUUSD</span>
               <span style="font-size:10px; color:#38BDF8;">▼</span>
             </button>
             <span id="headerTfText" style="color:#38BDF8; font-size:15px; font-weight:700;">M15</span>
-            <span id="activeBrokerBadge" class="font-mono" style="font-size:10px; padding:1px 6px; border-radius:4px; background:rgba(255,255,255,0.1); color:#CBD5E1;">SIM</span>
-            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:700; padding:1px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Nhấn để xóa cache & tải bản mới nhất">v4.0 ↻</button>
+            <span id="activeBrokerBadge" class="font-mono" style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.1); color:#CBD5E1;">SIM</span>
+            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v5.0 ↻</button>
           </div>
-          <div id="headerSymbolDesc" style="color:#94A3B8; font-size:11px; margin-top:1px;">
+          <div id="headerSymbolDesc" style="color:#94A3B8; font-size:11px; margin-top:1px; pointer-events:none;">
             Gold vs US Dollar • <span id="ohlcReadout" class="font-mono" style="font-size:11px; color:#CBD5E1;">O:2641.20 H:2643.80 L:2640.50 C:2642.50</span>
           </div>
         </div>
 
         <!-- Toast Notification -->
-        <div id="tradeToast" class="hidden font-mono" style="position:absolute; top:calc(var(--sat) + 10px); right:76px; z-index:30; background:rgba(15,23,42,0.95); border:1px solid #38BDF8; padding:7px 14px; border-radius:9px; font-size:12px; font-weight:600; color:#fff;">
+        <div id="tradeToast" class="hidden font-mono" style="position:absolute; top:calc(var(--sat) + 10px); right:74px; z-index:30; background:rgba(15,23,42,0.95); border:1px solid #38BDF8; padding:7px 14px; border-radius:9px; font-size:12px; font-weight:600; color:#fff; pointer-events:none;">
           Đã khớp lệnh!
         </div>
       </div>
 
     </div>
 
-    <!-- UNIFORM SINGLE-ROW BOTTOM EXECUTION DOCK (Never wraps or breaks in Portrait/Landscape) -->
+    <!-- UNIFORM BOTTOM EXECUTION DOCK (Zero Clipping on Folded Portrait) -->
     <footer id="bottomExecutionDock">
-      <!-- Left Group: Balance, Equity, Interpolated Vol Pill -->
-      <div style="display:flex; align-items:center; gap:8px; min-width:0; flex-shrink:1; overflow:hidden;" class="font-mono">
-        <div style="line-height:1.15; flex-shrink:0;">
-          <span class="metric-label" style="display:block; font-size:10px; color:#64748B; font-weight:600;">BAL</span>
-          <strong id="hudBalanceDisplay" class="metric-val" style="font-size:13px; color:#F8FAFC;">$20,450</strong>
+      <!-- Left Group: Balance/Equity + Unclipped Vol Button -->
+      <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;" class="font-mono">
+        <div id="accountMetricsStack" style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+          <div class="metric-row" style="line-height:1.15;">
+            <span class="metric-label" style="font-size:10px; color:#64748B; font-weight:600; margin-right:3px;">BAL</span>
+            <strong id="hudBalanceDisplay" class="metric-val" style="font-size:13px; color:#F8FAFC;">$20,450</strong>
+          </div>
+          <div class="metric-row" style="line-height:1.15;">
+            <span class="metric-label" style="font-size:10px; color:#64748B; font-weight:600; margin-right:3px;">EQ</span>
+            <strong id="hudEquityDisplay" class="metric-val text-bull-dynamic" style="font-size:13px;">$20,654</strong>
+          </div>
         </div>
-        <div style="line-height:1.15; flex-shrink:0;">
-          <span class="metric-label" style="display:block; font-size:10px; color:#64748B; font-weight:600;">EQ</span>
-          <strong id="hudEquityDisplay" class="metric-val text-bull-dynamic" style="font-size:13px;">$20,654</strong>
-        </div>
-        <button id="btnVolQuickOpen" class="vol-pill" style="height:40px; background:#111827; border:1px solid #263248; border-radius:9px; padding:0 10px; display:inline-flex; align-items:center; gap:4px; cursor:pointer; flex-shrink:0;" title="Chạm để mở Bảng Vốn & Nội suy Volume">
-          <span style="font-size:11px; color:#94A3B8;">Vol</span>
-          <strong id="hudInterpolatedVol" class="font-mono" style="font-size:14px; color:#38BDF8;">1.23</strong>
+
+        <!-- Vol Button uses exact same .dock-btn.dock-btn-secondary class & flex-shrink:0 so it NEVER clips to "Vo" -->
+        <button id="btnVolQuickOpen" class="dock-btn dock-btn-secondary font-mono" style="gap:4px; padding:0 10px;" title="Chạm để mở Bảng Vốn & Nội suy Volume">
+          <span style="font-size:11px; color:#94A3B8; font-weight:600;">Vol</span>
+          <strong id="hudInterpolatedVol" style="font-size:13px; color:#38BDF8;">1.23</strong>
         </button>
       </div>
 
@@ -345,10 +373,10 @@
         <button id="btnBuyExec" class="dock-btn btn-bull-dynamic font-mono">
           BUY
         </button>
-        <button id="btnCloseAllExec" class="dock-btn font-mono" style="background:#161F30; color:#F1F5F9; border:1px solid #28354D;">
+        <button id="btnCloseAllExec" class="dock-btn dock-btn-secondary font-mono">
           Close (<span id="openCountBadge">1</span>)
         </button>
-        <button id="btnToggleMenuDrawer" class="dock-btn font-mono" style="background:#161F30; color:#38BDF8; border:1px solid #28354D; padding:0 12px;" title="Mở Bảng Vốn & Quản lý Lệnh (☰)">
+        <button id="btnToggleMenuDrawer" class="dock-btn dock-btn-secondary font-mono" style="color:#38BDF8; padding:0 11px;" title="Mở Bảng Vốn & Quản lý Lệnh (☰)">
           ☰
         </button>
       </div>
@@ -359,11 +387,10 @@
     <!-- ===================================================================== -->
     <div id="tradingMenuDrawer" class="sheet-backdrop hidden">
       <div class="sheet-panel">
-        <!-- Big Touch-Friendly Header -->
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnMenuTabMatrix" class="big-tab-btn active">
-              📊 1. Bảng Vốn &amp; TP/SL (v4.0)
+              📊 1. Bảng Vốn &amp; TP/SL (v5.0)
             </button>
             <button id="btnMenuTabPositions" class="big-tab-btn">
               📈 2. Lệnh Đang Mở (<span id="drawerPosCount">1</span>)
@@ -375,7 +402,6 @@
           </button>
         </div>
 
-        <!-- Scrollable Body with Large Readable Typography (14px-16px) -->
         <div style="flex:1; overflow-y:auto; padding:16px;">
 
           <!-- PANE 1A: CAPITAL MATRIX & VOLUME INTERPOLATION -->
@@ -390,7 +416,6 @@
 
               <input id="simEquitySlider" type="range" min="1000" max="100000" step="250" value="20450" style="width:100%;" />
 
-              <!-- Large Preset Buttons & Manual Stepper -->
               <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding-top:4px;">
                 <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                   <span style="font-size:14px; color:#94A3B8; margin-right:4px;">Chế độ Lot:</span>
@@ -408,7 +433,6 @@
                 </div>
               </div>
 
-              <!-- Checkboxes with 14px-15px text -->
               <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding-top:6px; font-size:14px;">
                 <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
                   <input type="checkbox" id="chkLinearInterp" checked style="width:20px; height:20px;" />
@@ -429,7 +453,6 @@
               </div>
             </div>
 
-            <!-- Lookup Matrix Table with Large Inputs -->
             <div style="overflow-x:auto; border:1px solid #1E293B; border-radius:14px;">
               <table style="width:100%; border-collapse:collapse; font-size:14px; text-align:left;" class="font-mono">
                 <thead>
@@ -495,11 +518,10 @@
     <!-- ===================================================================== -->
     <div id="systemSettingsDrawer" class="sheet-backdrop hidden">
       <div class="sheet-panel">
-        <!-- Big Touch-Friendly Header -->
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnSetTabAppearance" class="big-tab-btn active">
-              🎨 1. Cặp Tiền &amp; Màu Nến (v4.0)
+              🎨 1. Cặp Tiền &amp; Màu Nến (v5.0)
             </button>
             <button id="btnSetTabApi" class="big-tab-btn">
               🔑 2. Đăng nhập IC Markets
@@ -514,7 +536,6 @@
           </button>
         </div>
 
-        <!-- Scrollable Settings Content (15px Typography) -->
         <div style="flex:1; overflow-y:auto; padding:16px;">
 
           <!-- PANE 2A: SYMBOL, CHART SHIFT & CANDLE COLORS -->
@@ -539,7 +560,7 @@
                 </div>
               </div>
 
-              <!-- Right Candle Offset Slider (Khoảng trống bên phải nến cuối) -->
+              <!-- Right Candle Offset Slider -->
               <div style="display:flex; flex-direction:column; gap:6px; padding-top:4px; border-top:1px solid #1E293B;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                   <span style="color:#CBD5E1; font-weight:600;">Khoảng trống bên phải nến cuối (Chart Shift):</span>
@@ -647,7 +668,7 @@
                 <button id="btnClearApiLog" style="background:transparent; border:0; color:#94A3B8; font-size:13px; cursor:pointer;">Xóa log</button>
               </div>
               <div id="apiConsoleLog" style="height:80px; overflow-y:auto; color:#38BDF8; line-height:1.4;">
-                <div>[Hệ thống] Đã tách riêng bảng Menu (☰) và bảng Cài đặt (⚙️). Hỗ trợ căn lề phải nến cuối (Chart Shift).</div>
+                <div>[Hệ thống v5.0] Đã kích hoạt ResizeObserver chống màn đen khi gập/mở và cảm ứng nhạy tức thì (pointerdown).</div>
               </div>
             </div>
           </div>
@@ -705,7 +726,6 @@
       showEma: false,
       orderType: 'MARKET',
 
-      // Right Candle Offset (Chart Shift: empty bars to the right of the latest candle)
       chartShiftEnabled: true,
       rightOffsetBars: 6,
 
@@ -744,6 +764,25 @@
 
       candles: []
     };
+
+    // Fast Touch-First Binding Helper (prevents iOS 300ms delay or missed taps when canvas is active)
+    function bindFastTap(elOrId, handler) {
+      const el = typeof elOrId === 'string' ? document.getElementById(elOrId) : elOrId;
+      if (!el) return;
+      let lastTapTime = 0;
+      el.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+          e.preventDefault();
+          e.stopPropagation();
+          lastTapTime = Date.now();
+          handler(e);
+        }
+      });
+      el.addEventListener('click', (e) => {
+        if (Date.now() - lastTapTime < 450) return;
+        handler(e);
+      });
+    }
 
     function logApiMessage(msg, isError = false) {
       const box = document.getElementById('apiConsoleLog');
@@ -834,53 +873,53 @@
     }
 
     // =========================================================================
-    // 3. BULLETPROOF MULTI-PASS VIEWPORT SYNC (Fixes Landscape->Portrait->Landscape Shrink Bug)
+    // 3. GPU-SAFE CANVAS ENGINE & RESIZEOBSERVER (Zero Black Screen on Fold/Unfold/Rotate)
     // =========================================================================
     const canvas = document.getElementById('tradingCanvas');
     const ctx = canvas.getContext('2d');
     let chartBounds = { minPrice: 0, maxPrice: 1, padTop: 22, padBottom: 22, padRight: 64 };
+    let lastValidW = 360;
+    let lastValidH = 520;
 
     function syncViewportAndRedraw() {
-      const vv = window.visualViewport;
-      const vw = Math.round(vv ? vv.width : document.documentElement.clientWidth || window.innerWidth);
-      const vh = Math.round(vv ? vv.height : document.documentElement.clientHeight || window.innerHeight);
-
-      // Force root viewport container to exact hardware pixel bounds so no bottom/right black bar ever appears
-      const appRoot = document.getElementById('appViewport');
-      appRoot.style.width = vw + 'px';
-      appRoot.style.height = vh + 'px';
-      window.scrollTo(0, 0);
-
       const wrapper = document.getElementById('chartWrapper');
       if (!wrapper) return;
       const rect = wrapper.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.max(180, rect.width) * dpr;
-      canvas.height = Math.max(180, rect.height) * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawChart(rect.width, rect.height);
-    }
 
-    // Run multi-stage reflow pass on any rotation/resize so iOS Safari animation settle never leaves stale dimensions
-    function triggerOrientationReflow() {
-      syncViewportAndRedraw();
-      requestAnimationFrame(syncViewportAndRedraw);
-      setTimeout(syncViewportAndRedraw, 80);
-      setTimeout(syncViewportAndRedraw, 220);
-      setTimeout(syncViewportAndRedraw, 420);
-    }
+      // Guard against transient 0x0 dimensions mid-fold/unfold animation on iPhone Duo
+      const w = rect.width > 40 ? rect.width : lastValidW;
+      const h = rect.height > 40 ? rect.height : lastValidH;
+      lastValidW = w;
+      lastValidH = h;
 
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', triggerOrientationReflow);
-      window.visualViewport.addEventListener('scroll', triggerOrientationReflow);
-    }
-    window.addEventListener('resize', triggerOrientationReflow);
-    window.addEventListener('orientationchange', () => {
-      // Attempt to unlock orientation if supported by WebKit/Screen API
-      if (screen.orientation && screen.orientation.unlock) {
-        try { screen.orientation.unlock(); } catch (e) {}
+      // Cap DPR at 2.0 so iOS Safari never drops WebKit canvas backing store on high-res 7.6" unfolded display
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const targetW = Math.round(w * dpr);
+      const targetH = Math.round(h * dpr);
+
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
       }
-      triggerOrientationReflow();
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawChart(w, h);
+    }
+
+    // Native ResizeObserver tracks exact layout changes across fold, unfold, and rotation
+    const chartWrapperEl = document.getElementById('chartWrapper');
+    if (window.ResizeObserver && chartWrapperEl) {
+      const ro = new ResizeObserver(() => {
+        requestAnimationFrame(syncViewportAndRedraw);
+      });
+      ro.observe(chartWrapperEl);
+    }
+    window.addEventListener('resize', () => requestAnimationFrame(syncViewportAndRedraw));
+    window.addEventListener('orientationchange', () => {
+      setTimeout(syncViewportAndRedraw, 60);
+      setTimeout(syncViewportAndRedraw, 240);
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) requestAnimationFrame(syncViewportAndRedraw);
     });
 
     // =========================================================================
@@ -939,7 +978,10 @@
     }
 
     function drawChart(w, h) {
-      ctx.clearRect(0, 0, w, h);
+      // Explicit solid black background fill so canvas never flickers transparent/blank
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, w, h);
+
       const inst = INSTRUMENTS[state.symbol];
       const candles = state.candles;
       if (!candles.length) return;
@@ -981,7 +1023,6 @@
         ctx.fillText(p.toFixed(inst.digits), plotW + 5, y + 3);
       }
 
-      // Adaptive Vertical Grid & Bottom Timestamps (prevents overlapping labels on narrow portrait screens)
       const maxTimeLabels = Math.max(2, Math.floor(plotW / 105));
       const vStep = Math.max(8, Math.ceil(candles.length / maxTimeLabels));
       for (let i = vStep; i < candles.length; i += vStep) {
@@ -994,7 +1035,6 @@
         ctx.fillText(tLabel, Math.max(4, Math.min(plotW - 72, x - 32)), h - 6);
       }
 
-      // Draw subtle MT5 Chart Shift triangle mark at top of latest candle when Chart Shift is active
       if (rightShiftBars > 0) {
         const lastCandleX = (candles.length - 1) * stepX + stepX * 0.5;
         ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
@@ -1086,7 +1126,7 @@
       ctx.fillText(currentPrice.toFixed(inst.digits), plotW + 4, yCur + 3.5);
       ctx.restore();
 
-      // 4. Draggable TP / SL / Entry Lines (Tags placed neatly in right buffer zone)
+      // 4. Draggable TP / SL / Entry Lines
       if (state.showOverlayLines) {
         const slPips = Math.abs(state.entryLinePrice - state.slLinePrice) / inst.pipSize;
         const tpPips = Math.abs(state.tpLinePrice - state.entryLinePrice) / inst.pipSize;
@@ -1204,7 +1244,7 @@
     }
 
     // =========================================================================
-    // 5. TOUCH & MOUSE GESTURES ON CHART
+    // 5. TOUCH & MOUSE GESTURES ON CHART (Scoped strictly to Canvas)
     // =========================================================================
     function getPointerCoords(evt) {
       const rect = canvas.getBoundingClientRect();
@@ -1214,13 +1254,14 @@
     }
 
     function handlePointerDown(evt) {
+      if (evt.target !== canvas) return;
       const coords = getPointerCoords(evt);
 
       if (state.showOverlayLines) {
         const yTp = priceToY(state.tpLinePrice, coords.h);
         const ySl = priceToY(state.slLinePrice, coords.h);
         const yEntry = priceToY(state.entryLinePrice, coords.h);
-        const hit = 20;
+        const hit = 22;
 
         if (Math.abs(coords.y - yTp) < hit) { state.draggingLine = 'TP'; return; }
         if (Math.abs(coords.y - ySl) < hit) { state.draggingLine = 'SL'; return; }
@@ -1240,11 +1281,12 @@
     }
 
     function handlePointerMove(evt) {
+      if (!state.draggingLine && !state.rulerAnchor && evt.target !== canvas) return;
       const coords = getPointerCoords(evt);
       const inst = INSTRUMENTS[state.symbol];
 
       if (state.draggingLine) {
-        evt.preventDefault();
+        if (evt.cancelable) evt.preventDefault();
         const newP = Number(yToPrice(coords.y, coords.h).toFixed(inst.digits));
         if (state.draggingLine === 'TP') state.tpLinePrice = newP;
         else if (state.draggingLine === 'SL') state.slLinePrice = newP;
@@ -1260,7 +1302,7 @@
       }
 
       if (state.crosshairEnabled && coords.x >= 0 && coords.x <= coords.w && coords.y >= 0 && coords.y <= coords.h) {
-        if (evt.touches) evt.preventDefault();
+        if (evt.touches && evt.cancelable) evt.preventDefault();
         state.crosshairPos = { x: coords.x, y: coords.y };
         const plotW = coords.w - chartBounds.padRight;
         const totalSlots = state.candles.length + getEffectiveRightShiftBars();
@@ -1276,20 +1318,22 @@
     }
 
     function handlePointerUp() {
-      state.draggingLine = null;
-      state.rulerAnchor = null;
-      syncViewportAndRedraw();
+      if (state.draggingLine || state.rulerAnchor) {
+        state.draggingLine = null;
+        state.rulerAnchor = null;
+        syncViewportAndRedraw();
+      }
     }
 
     canvas.addEventListener('mousedown', handlePointerDown);
     window.addEventListener('mousemove', handlePointerMove);
     window.addEventListener('mouseup', handlePointerUp);
     canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
-    window.addEventListener('touchmove', handlePointerMove, { passive: false });
+    canvas.addEventListener('touchmove', handlePointerMove, { passive: false });
     window.addEventListener('touchend', handlePointerUp);
 
     // =========================================================================
-    // 6. SEPARATE MENU (☰) AND SETTINGS (⚙️) DRAWER CONTROLLERS
+    // 6. SEPARATE MENU (☰) AND SETTINGS (⚙️) DRAWER CONTROLLERS (Fast Tap)
     // =========================================================================
     const tradingMenuDrawer = document.getElementById('tradingMenuDrawer');
     const systemSettingsDrawer = document.getElementById('systemSettingsDrawer');
@@ -1326,23 +1370,21 @@
       }
     }
 
-    // ☰ Menu Button & Vol Button -> Open Drawer 1 (Trading & Capital Matrix)
-    document.getElementById('btnToggleMenuDrawer').addEventListener('click', () => openTradingMenu('MATRIX'));
-    document.getElementById('btnVolQuickOpen').addEventListener('click', () => openTradingMenu('MATRIX'));
-    document.getElementById('btnMenuTabMatrix').addEventListener('click', () => openTradingMenu('MATRIX'));
-    document.getElementById('btnMenuTabPositions').addEventListener('click', () => openTradingMenu('POSITIONS'));
-    document.getElementById('btnCloseTradingMenu').addEventListener('click', () => tradingMenuDrawer.classList.add('hidden'));
+    bindFastTap('btnToggleMenuDrawer', () => openTradingMenu('MATRIX'));
+    bindFastTap('btnVolQuickOpen', () => openTradingMenu('MATRIX'));
+    bindFastTap('btnMenuTabMatrix', () => openTradingMenu('MATRIX'));
+    bindFastTap('btnMenuTabPositions', () => openTradingMenu('POSITIONS'));
+    bindFastTap('btnCloseTradingMenu', () => tradingMenuDrawer.classList.add('hidden'));
 
-    // ⚙️ Gear Button, Symbol Header & Status Dot -> Open Drawer 2 (Settings & IC Markets Login)
-    document.getElementById('btnOpenSettingsGear').addEventListener('click', () => openSystemSettings('APPEARANCE'));
-    document.getElementById('btnSymbolTrigger').addEventListener('click', () => openSystemSettings('APPEARANCE'));
-    document.getElementById('btnQuickSignIn').addEventListener('click', () => openSystemSettings('API'));
-    document.getElementById('btnSetTabAppearance').addEventListener('click', () => openSystemSettings('APPEARANCE'));
-    document.getElementById('btnSetTabApi').addEventListener('click', () => openSystemSettings('API'));
-    document.getElementById('btnCloseSettingsDrawer').addEventListener('click', () => systemSettingsDrawer.classList.add('hidden'));
+    bindFastTap('btnOpenSettingsGear', () => openSystemSettings('APPEARANCE'));
+    bindFastTap('btnSymbolTrigger', () => openSystemSettings('APPEARANCE'));
+    bindFastTap('btnQuickSignIn', () => openSystemSettings('API'));
+    bindFastTap('btnSetTabAppearance', () => openSystemSettings('APPEARANCE'));
+    bindFastTap('btnSetTabApi', () => openSystemSettings('API'));
+    bindFastTap('btnCloseSettingsDrawer', () => systemSettingsDrawer.classList.add('hidden'));
 
     // =========================================================================
-    // 7. MATRIX TABLE, POSITIONS & EXECUTION WIRING
+    // 7. MATRIX TABLE, POSITIONS & EXECUTION WIRING (Fast Tap)
     // =========================================================================
     function renderMatrixTable() {
       const tbody = document.getElementById('matrixTableBody');
@@ -1375,7 +1417,7 @@
       });
 
       tbody.querySelectorAll('.btn-del-tier').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        bindFastTap(btn, (e) => {
           if (state.capitalMatrix.length <= 1) return;
           state.capitalMatrix.splice(Number(e.currentTarget.dataset.del), 1);
           renderMatrixTable();
@@ -1426,7 +1468,7 @@
       document.getElementById('hudOpenPnl').textContent = (totalPnl >= 0 ? '+$' : '-$') + Math.abs(totalPnl).toFixed(2);
 
       tbody.querySelectorAll('.btn-pos-close').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        bindFastTap(btn, (e) => {
           state.positions.splice(Number(e.currentTarget.dataset.close), 1);
           renderPositionsTable();
           computeInterpolatedParameters();
@@ -1436,7 +1478,7 @@
       });
 
       tbody.querySelectorAll('.btn-pos-be').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        bindFastTap(btn, (e) => {
           const i = Number(e.currentTarget.dataset.be);
           state.positions[i].slPrice = state.positions[i].openPrice;
           renderPositionsTable();
@@ -1451,7 +1493,7 @@
       t.textContent = msg;
       t.classList.remove('hidden');
       clearTimeout(showToast._timer);
-      showToast._timer = setTimeout(() => t.classList.add('hidden'), 2200);
+      showToast._timer = setTimeout(() => t.classList.add('hidden'), 2000);
     }
 
     function executeOrder(side) {
@@ -1499,24 +1541,29 @@
       showToast(`Đã khớp ${side} ${state.lotSize.toFixed(2)} Lot ${state.symbol}`);
     }
 
-    // Left Rail Controls
-    document.getElementById('btnCrosshairTool').addEventListener('click', (e) => {
+    // Left Rail Controls (Bound with Instant FastTap)
+    bindFastTap('btnCrosshairTool', () => {
+      const btn = document.getElementById('btnCrosshairTool');
       state.crosshairEnabled = !state.crosshairEnabled;
-      e.currentTarget.classList.toggle('active', state.crosshairEnabled);
+      btn.classList.toggle('active', state.crosshairEnabled);
       if (!state.crosshairEnabled) { state.crosshairPos = null; state.rulerAnchor = null; }
+      showToast(state.crosshairEnabled ? 'Crosshair: BẬT' : 'Crosshair: TẮT');
       syncViewportAndRedraw();
     });
 
-    document.getElementById('btnToggleLines').addEventListener('click', (e) => {
+    bindFastTap('btnToggleLines', () => {
+      const btn = document.getElementById('btnToggleLines');
       state.showOverlayLines = !state.showOverlayLines;
-      e.currentTarget.classList.toggle('active', state.showOverlayLines);
+      btn.classList.toggle('active', state.showOverlayLines);
+      showToast(state.showOverlayLines ? 'Đường TP/SL: BẬT' : 'Đường TP/SL: TẮT');
       syncViewportAndRedraw();
     });
 
-    document.getElementById('btnToggleChartShift').addEventListener('click', (e) => {
+    bindFastTap('btnToggleChartShift', () => {
+      const btn = document.getElementById('btnToggleChartShift');
       state.chartShiftEnabled = !state.chartShiftEnabled;
-      e.currentTarget.classList.toggle('active', state.chartShiftEnabled);
-      showToast(state.chartShiftEnabled ? `Đã bật căn lề phải nến cuối (${state.rightOffsetBars} nến)` : 'Đã tắt khoảng trống bên phải nến cuối');
+      btn.classList.toggle('active', state.chartShiftEnabled);
+      showToast(state.chartShiftEnabled ? `Chart Shift: BẬT (${state.rightOffsetBars} nến)` : 'Chart Shift: TẮT');
       syncViewportAndRedraw();
     });
 
@@ -1529,20 +1576,21 @@
     });
 
     document.querySelectorAll('.tf-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      bindFastTap(btn, () => {
         document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        state.timeframe = e.currentTarget.dataset.tf;
+        btn.classList.add('active');
+        state.timeframe = btn.dataset.tf;
         document.getElementById('headerTfText').textContent = state.timeframe;
         generateCandlesForSymbol(state.symbol);
         syncViewportAndRedraw();
+        showToast(`Khung giờ: ${state.timeframe}`);
       });
     });
 
-    // Execution Buttons
-    document.getElementById('btnBuyExec').addEventListener('click', () => executeOrder('BUY'));
-    document.getElementById('btnSellExec').addEventListener('click', () => executeOrder('SELL'));
-    document.getElementById('btnCloseAllExec').addEventListener('click', () => {
+    // Execution Buttons (Fast Tap)
+    bindFastTap('btnBuyExec', () => executeOrder('BUY'));
+    bindFastTap('btnSellExec', () => executeOrder('SELL'));
+    bindFastTap('btnCloseAllExec', () => {
       state.positions = [];
       renderPositionsTable();
       computeInterpolatedParameters();
@@ -1576,7 +1624,7 @@
 
     document.getElementById('inputBullColor').addEventListener('input', (e) => applyCustomColors(e.target.value, state.bearColor));
     document.getElementById('inputBearColor').addEventListener('input', (e) => applyCustomColors(state.bullColor, e.target.value));
-    document.getElementById('btnResetColors').addEventListener('click', () => {
+    bindFastTap('btnResetColors', () => {
       applyCustomColors('#38BDF8', '#991B1B');
       showToast('Đã khôi phục màu chuẩn!');
     });
@@ -1596,18 +1644,18 @@
       computeInterpolatedParameters();
       syncViewportAndRedraw();
     }
-    document.getElementById('btnVolModeAuto').addEventListener('click', () => setVolModeActive('btnVolModeAuto', 'AUTO_MATRIX'));
-    document.getElementById('btnVolModeRisk05').addEventListener('click', () => setVolModeActive('btnVolModeRisk05', 'RISK_05'));
-    document.getElementById('btnVolModeRisk10').addEventListener('click', () => setVolModeActive('btnVolModeRisk10', 'RISK_10'));
-    document.getElementById('btnVolModeRisk20').addEventListener('click', () => setVolModeActive('btnVolModeRisk20', 'RISK_20'));
+    bindFastTap('btnVolModeAuto', () => setVolModeActive('btnVolModeAuto', 'AUTO_MATRIX'));
+    bindFastTap('btnVolModeRisk05', () => setVolModeActive('btnVolModeRisk05', 'RISK_05'));
+    bindFastTap('btnVolModeRisk10', () => setVolModeActive('btnVolModeRisk10', 'RISK_10'));
+    bindFastTap('btnVolModeRisk20', () => setVolModeActive('btnVolModeRisk20', 'RISK_20'));
 
-    document.getElementById('btnLotMinus').addEventListener('click', () => {
+    bindFastTap('btnLotMinus', () => {
       state.volMode = 'MANUAL';
       state.lotSize = Math.max(0.01, Number((state.lotSize - 0.05).toFixed(2)));
       computeInterpolatedParameters();
       syncViewportAndRedraw();
     });
-    document.getElementById('btnLotPlus').addEventListener('click', () => {
+    bindFastTap('btnLotPlus', () => {
       state.volMode = 'MANUAL';
       state.lotSize = Number((state.lotSize + 0.05).toFixed(2));
       computeInterpolatedParameters();
@@ -1648,7 +1696,7 @@
       state.orderType = e.target.value;
       syncViewportAndRedraw();
     });
-    document.getElementById('btnAddMatrixTier').addEventListener('click', () => {
+    bindFastTap('btnAddMatrixTier', () => {
       const last = state.capitalMatrix[state.capitalMatrix.length - 1] || { equity: 10000, lots: 0.5, maxRiskUsd: 200, slPips: 35, tpPips: 70 };
       state.capitalMatrix.push({ equity: last.equity + 15000, lots: Number((last.lots + 0.75).toFixed(2)), maxRiskUsd: last.maxRiskUsd + 300, slPips: last.slPips, tpPips: last.tpPips });
       renderMatrixTable();
@@ -1741,7 +1789,7 @@
       showToast('Đã chuyển về chế độ Giả lập');
     }
 
-    document.getElementById('btnApiCtrader').addEventListener('click', () => {
+    bindFastTap('btnApiCtrader', () => {
       document.getElementById('formCtraderPanel').style.display = 'flex';
       document.getElementById('formMt4Panel').style.display = 'none';
       document.getElementById('btnApiCtrader').style.background = '#38BDF8';
@@ -1749,7 +1797,7 @@
       document.getElementById('btnApiMt4').style.background = '#1E293B';
       document.getElementById('btnApiMt4').style.color = '#CBD5E1';
     });
-    document.getElementById('btnApiMt4').addEventListener('click', () => {
+    bindFastTap('btnApiMt4', () => {
       document.getElementById('formCtraderPanel').style.display = 'none';
       document.getElementById('formMt4Panel').style.display = 'flex';
       document.getElementById('btnApiMt4').style.background = '#FBBF24';
@@ -1757,10 +1805,10 @@
       document.getElementById('btnApiCtrader').style.background = '#1E293B';
       document.getElementById('btnApiCtrader').style.color = '#CBD5E1';
     });
-    document.getElementById('btnConnectCtraderLive').addEventListener('click', connectLiveCTrader);
-    document.getElementById('btnConnectMt4Live').addEventListener('click', connectLiveMt4MetaApi);
-    document.getElementById('btnDisconnectLive').addEventListener('click', disconnectLiveBroker);
-    document.getElementById('btnClearApiLog').addEventListener('click', () => { document.getElementById('apiConsoleLog').innerHTML = ''; });
+    bindFastTap('btnConnectCtraderLive', connectLiveCTrader);
+    bindFastTap('btnConnectMt4Live', connectLiveMt4MetaApi);
+    bindFastTap('btnDisconnectLive', disconnectLiveBroker);
+    bindFastTap('btnClearApiLog', () => { document.getElementById('apiConsoleLog').innerHTML = ''; });
 
     // Swift Code Modal
     const SWIFT_FILES = {
@@ -1771,21 +1819,28 @@
     let currentSwiftKey = 'fileRiskEngine';
     const swiftModal = document.getElementById('swiftCodeModal');
     const swiftDisplay = document.getElementById('swiftCodeDisplay');
-    document.getElementById('btnOpenSwiftModal').addEventListener('click', () => {
+    bindFastTap('btnOpenSwiftModal', () => {
       swiftDisplay.textContent = SWIFT_FILES[currentSwiftKey];
       swiftModal.classList.remove('hidden');
     });
-    document.getElementById('btnCloseSwiftModal').addEventListener('click', () => swiftModal.classList.add('hidden'));
+    bindFastTap('btnCloseSwiftModal', () => swiftModal.classList.add('hidden'));
     document.querySelectorAll('.swift-file-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        currentSwiftKey = e.currentTarget.dataset.swift;
+      bindFastTap(btn, () => {
+        currentSwiftKey = btn.dataset.swift;
         swiftDisplay.textContent = SWIFT_FILES[currentSwiftKey];
       });
     });
-    document.getElementById('btnCopySwiftCode').addEventListener('click', () => {
+    bindFastTap('btnCopySwiftCode', () => {
       const code = Object.values(SWIFT_FILES).join('\n\n');
       try { navigator.clipboard.writeText(code); } catch (e) {}
       showToast('Đã sao chép Swift Code!');
+    });
+
+    // Cache-busting reload button
+    bindFastTap('btnForceReloadVersion', () => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('v', Date.now().toString());
+      window.location.replace(url.toString());
     });
 
     // Live Price Stream
@@ -1812,19 +1867,13 @@
       syncViewportAndRedraw();
     }, 950);
 
-    document.getElementById('btnForceReloadVersion').addEventListener('click', () => {
-      const url = new URL(window.location.href);
-      url.searchParams.set('v', Date.now().toString());
-      window.location.replace(url.toString());
-    });
-
     window.addEventListener('load', () => {
       applyCustomColors('#38BDF8', '#991B1B');
       generateCandlesForSymbol(state.symbol);
       renderMatrixTable();
       renderPositionsTable();
       computeInterpolatedParameters();
-      triggerOrientationReflow();
+      syncViewportAndRedraw();
     });
   </script>
 </body>

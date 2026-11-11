@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="DuoTrade v10.0" />
+  <meta name="apple-mobile-web-app-title" content="DuoTrade v11.0" />
   <meta name="theme-color" content="#000000" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>DuoTrade Pro v10.0 — iPhone Duo Full-Screen Terminal</title>
+  <title>DuoTrade Pro v11.0 — iPhone Duo Full-Screen Terminal</title>
   <style>
     :root {
       --bull-color: #38BDF8;
@@ -111,7 +111,7 @@
       background: transparent !important;
     }
 
-    /* Bottom Execution Dock: exact pixel top & height controlled dynamically so it NEVER floats with a black band below! */
+    /* Bottom Execution Dock: strictly anchored to bottom:0 of live visible viewport so it NEVER disappears! */
     #bottomExecutionDock {
       position: fixed;
       left: 0;
@@ -120,7 +120,7 @@
       height: 50px;
       padding-left: 6px;
       padding-right: 6px;
-      background: #05080D;
+      background: #000000;
       border-top: 1px solid #161C26;
       display: flex;
       flex-direction: row;
@@ -129,7 +129,6 @@
       gap: 6px;
       width: 100%;
       z-index: 40;
-      box-shadow: 0 80px 0 80px #05080D;
     }
 
     .dock-btn {
@@ -330,7 +329,7 @@
             </button>
             <span id="headerTfText" style="color:#38BDF8; font-size:15px; font-weight:700;">M15</span>
             <span id="activeBrokerBadge" class="font-mono" style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.1); color:#CBD5E1;">SIM</span>
-            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v10.0 ↻</button>
+            <button id="btnForceReloadVersion" class="font-mono" style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; background:rgba(16,185,129,0.22); color:#6EE7B7; border:1px solid rgba(16,185,129,0.45); cursor:pointer;" title="Chạm để xóa cache & tải mới">v11.0 ↻</button>
             <span id="viewportDebugTag" class="font-mono" style="font-size:9px; color:#64748B;"></span>
           </div>
           <div id="headerSymbolDesc" style="color:#94A3B8; font-size:11px; margin-top:1px; pointer-events:none;">
@@ -392,7 +391,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnMenuTabMatrix" class="big-tab-btn active">
-              📊 1. Bảng Vốn &amp; TP/SL (v10.0)
+              📊 1. Bảng Vốn &amp; TP/SL (v11.0)
             </button>
             <button id="btnMenuTabPositions" class="big-tab-btn">
               📈 2. Lệnh Đang Mở (<span id="drawerPosCount">0</span>)
@@ -523,7 +522,7 @@
         <div style="padding:14px 16px; border-bottom:1px solid #1E293B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="btnSetTabAppearance" class="big-tab-btn active">
-              🎨 1. Cặp Tiền &amp; Màu Nến (v10.0)
+              🎨 1. Cặp Tiền &amp; Màu Nến (v11.0)
             </button>
             <button id="btnSetTabApi" class="big-tab-btn">
               🔑 2. Đăng nhập IC Markets
@@ -670,7 +669,7 @@
                 <button id="btnClearApiLog" style="background:transparent; border:0; color:#94A3B8; font-size:13px; cursor:pointer;">Xóa log</button>
               </div>
               <div id="apiConsoleLog" style="height:80px; overflow-y:auto; color:#38BDF8; line-height:1.4;">
-                <div>[Hệ thống v10.0] Đã cân bằng tỷ lệ nút SELL = BUY (max 92px) và khóa khung hình theo visualViewport thực tế.</div>
+                <div>[Hệ thống v11.0] Đã cân bằng tỷ lệ nút SELL = BUY (max 92px) và khóa khung hình theo visualViewport thực tế.</div>
               </div>
             </div>
           </div>
@@ -881,62 +880,53 @@
     let chartBounds = { minPrice: 0, maxPrice: 1, padTop: 22, padBottom: 22, padRight: 64 };
     let lastValidW = 360;
     let lastValidH = 520;
-    const maxHeightByWidth = {};
+
+    // Force iOS WebKit to recalculate stale WKWebView frame after rotation by toggling viewport meta & scrolling
+    function forceIOSWebKitFrameReflow() {
+      const vpMeta = document.querySelector('meta[name="viewport"]');
+      if (vpMeta) {
+        vpMeta.setAttribute('content', 'width=device-width, initial-scale=1.0001, maximum-scale=1.0001, user-scalable=no, viewport-fit=cover');
+        setTimeout(() => {
+          vpMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+          window.scrollTo(0, 0);
+          syncViewportAndRedraw();
+        }, 40);
+      }
+    }
 
     function syncViewportAndRedraw() {
       window.scrollTo(0, 0);
 
+      // ALWAYS use the LIVE visible viewport height so the bottom dock NEVER gets pushed below the WebKit clipping boundary!
       const vvW = window.visualViewport ? Math.round(window.visualViewport.width) : 0;
       const vvH = window.visualViewport ? Math.round(window.visualViewport.height) : 0;
       const iW = Math.round(window.innerWidth || 0);
       const iH = Math.round(window.innerHeight || 0);
-      const cW = Math.round(document.documentElement.clientWidth || 0);
-      const cH = Math.round(document.documentElement.clientHeight || 0);
 
-      const curW = vvW > 0 ? vvW : (cW > 0 ? cW : iW);
-      let rawH = Math.max(vvH, iH, cH);
-
-      // Remember the true unclipped height for this exact width (e.g. 867 -> 669)
-      if (!maxHeightByWidth[curW] || rawH > maxHeightByWidth[curW]) {
-        maxHeightByWidth[curW] = rawH;
-      }
-
-      // iPhone Duo Unfolded Landscape Bug Fix:
-      // In IMG_3973 initial Unfolded Landscape is 867x669 (and Portrait is 669x951).
-      // After rotating Landscape -> Portrait -> Landscape, iOS WebKit shrinks innerHeight from 669 down to 587 (leaving an 82px black gap at the bottom!).
-      let trueH = maxHeightByWidth[curW];
-      if (curW > 700 && curW > trueH) {
-        const sMin = window.screen ? Math.min(window.screen.width, window.screen.height) : 0;
-        // If portrait width was 669 (or screen short side is ~669) and current landscape height shrunk to ~587, restore full 669px!
-        if (sMin >= 640 && sMin <= 740 && trueH < sMin && (sMin - trueH) <= 100) {
-          trueH = sMin;
-        } else if (trueH >= 560 && trueH <= 610 && curW >= 840 && curW <= 900) {
-          trueH = 669;
-        }
-      }
+      const curW = vvW > 0 ? vvW : iW;
+      const curH = vvH > 0 ? vvH : iH;
 
       const dockH = curW <= 440 ? 48 : 50;
-      const wsH = Math.max(180, trueH - dockH);
+      const wsH = Math.max(180, curH - dockH);
 
       const appRoot = document.getElementById('appViewport');
       const mainWs = document.getElementById('mainWorkspace');
       const bottomDock = document.getElementById('bottomExecutionDock');
 
       appRoot.style.width = curW + 'px';
-      appRoot.style.height = trueH + 'px';
+      appRoot.style.height = curH + 'px';
 
       mainWs.style.width = curW + 'px';
       mainWs.style.height = wsH + 'px';
-      mainWs.style.bottom = 'auto';
 
       bottomDock.style.width = curW + 'px';
       bottomDock.style.height = dockH + 'px';
       bottomDock.style.top = wsH + 'px';
-      bottomDock.style.bottom = 'auto';
+      bottomDock.style.bottom = '0px';
 
       const dbg = document.getElementById('viewportDebugTag');
       if (dbg) {
-        dbg.textContent = rawH !== trueH ? `${curW}×${trueH} (fix ${rawH})` : `${curW}×${trueH}`;
+        dbg.textContent = `${curW}×${curH}`;
       }
 
       const wrapper = document.getElementById('chartWrapper');
@@ -961,9 +951,10 @@
     }
 
     function scheduleRotationSettle() {
+      forceIOSWebKitFrameReflow();
       syncViewportAndRedraw();
       requestAnimationFrame(syncViewportAndRedraw);
-      [50, 150, 300, 500, 800, 1200].forEach(ms => setTimeout(syncViewportAndRedraw, ms));
+      [80, 180, 350, 600].forEach(ms => setTimeout(syncViewportAndRedraw, ms));
     }
 
     const chartWrapperEl = document.getElementById('chartWrapper');
